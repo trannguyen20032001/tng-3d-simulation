@@ -23,7 +23,7 @@ src/
     furniture/                     Bàn, ghế, ghế đẩu, bộ sofa
     storage/                       Kệ pallet, kệ thường, kệ phụ liệu,
                                    thùng hàng và xe đẩy
-    machines/                      Bàn cắt và máy cắt kèm theo
+    machines/                      Bàn cắt, máy cắt và robot AGV
     outdoor/                       Ô tô, xe tải, xe nâng và đèn đường
   areas/
     floor-1/build.js                Bố trí và dựng tầng 1, cảnh sân xưởng,
@@ -34,6 +34,8 @@ src/
     canteen/data/cseg.js            Dữ liệu bản vẽ nhà ăn
   features/floor-controls.js        Chế độ tầng, tách tầng, đồng bộ nhãn,
                                    luồng hàng và nút diện tích
+  features/agv.js                   Robot AGV, tuyến chạy và các nút điều khiển
+  features/preferences.js            Lưu và khôi phục trạng thái toolbar qua LocalStorage
   styles/                          CSS cơ bản và giao diện
 scripts/
   source-manifest.json             Danh sách script theo thứ tự tải
@@ -52,6 +54,9 @@ backups/original.html               Bản HTML trước khi tách mã
 | Ghế đẩu dùng cho công nhân và chân ghế có tựa | `src/components/furniture/stool.js` |
 | Bộ sofa tiếp khách | `src/components/furniture/sofa-set.js` |
 | Kệ kho nguyên liệu, thành phẩm | `src/components/storage/pallet-rack.js` |
+| Hình dáng robot AGV | `src/components/machines/agv.js` |
+| Tuyến chạy, tốc độ và nút AGV | `src/features/agv.js` |
+| Trạng thái được lưu khi tải lại trang | `src/features/preferences.js` |
 | Vị trí đồ vật tầng 1 | `src/areas/floor-1/build.js` |
 | Vị trí đồ vật tầng 2 | `src/areas/floor-2/build.js` và `src/areas/floor-2/data/` |
 | Cách ẩn/hiện hoặc nâng tầng | `src/features/floor-controls.js` |
@@ -79,12 +84,31 @@ Mỗi khu vực có batch riêng để ẩn/hiện và di chuyển độc lập.
 
 `TNG.state` thay các biến `window.__f1`, `window.__f2`, `window.__cant2`… Các hàm dựng tầng và nhà ăn nhận trạng thái này qua tham số. Các script cổ điển được dùng có chủ ý để tiếp tục mở qua `file://`; khi thêm file cần khai báo trong cả hai HTML và `source-manifest.json`.
 
+## Ghi nhớ tùy chọn
+
+Các nút trên toolbar được tự động lưu vào LocalStorage của trình duyệt: góc nhìn, tầng đang xem, tách tầng, nhãn, tường, cây, luồng hàng, chuyển động, trần tầng 2, diện tích, AGV và tuyến AGV. Khi tải lại trang, các tùy chọn đó được khôi phục. Muốn trở về mặc định, xóa dữ liệu trang trong trình duyệt hoặc chạy trong DevTools Console:
+
+```js
+localStorage.removeItem("tng-viet-duc-3d:toolbar-v1");
+location.reload();
+```
+
+## Xem thông số AGV
+
+Bấm trực tiếp vào một AGV để mở bảng thông tin ở góc trên bên phải. Bảng hiển thị mã AGV, tầng hoạt động, trạng thái, pin, tải trọng đang chở và tốc độ. Nút `×` đóng bảng.
+
+Rê chuột lên AGV để thấy outline xanh lá phát sáng. Hiệu ứng dùng chung nằm tại `src/features/hover-outline.js`; một đối tượng mới có thể dùng hiệu ứng bằng `TNG.state.hoverOutline.register(object3D)`.
+
+## Cảm biến môi trường
+
+Sáu cảm biến `ENV-01` đến `ENV-06` được phân bố ở tầng 1 và tầng 2. Bấm vào cảm biến để xem nhiệt độ và độ ẩm mô phỏng theo thời gian thực; nút `Cảm biến` trên thanh công cụ dùng để ẩn/hiện chúng. Cảm biến cũng có outline xanh lá khi rê chuột lên.
+
 ## Kiểm tra
 
 ```powershell
 node scripts/verify-browser.cjs
 ```
 
-Script kiểm tra cú pháp, đường dẫn tài nguyên và so sánh hình học, tọa độ, màu, số instance với bản gốc; sau đó thử các nút tầng, tách tầng, góc nhìn, cây, trần và diện tích. Cần Chrome trên Windows; có thể cấu hình vị trí trình duyệt bằng biến `CHROME_PATH`.
+Script kiểm tra cú pháp, đường dẫn tài nguyên và so sánh hình học, tọa độ, màu, số instance với bản gốc; sau đó thử AGV, các nút tầng, tách tầng, góc nhìn, cây, trần, diện tích và việc khôi phục tùy chọn sau khi tải lại trang. Cần Chrome trên Windows; có thể cấu hình vị trí trình duyệt bằng biến `CHROME_PATH`.
 
 Sáu nhóm instance xe máy trong bãi xe được loại khỏi phép so sánh chính xác vì bản gốc dùng `Math.random()` để chọn vị trí trống và màu xe. Logic đó được giữ nguyên. Ảnh chụp kiểm tra được lưu vào `.tmp/refactored.png`.

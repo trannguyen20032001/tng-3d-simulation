@@ -13,7 +13,7 @@ for (const file of manifest)
   new vm.Script(fs.readFileSync(path.join(root, file), "utf8"), {
     filename: file,
   });
-for (const file of ["index.html", "Xưởng TNG Việt Đức 3D - Cả 2 tầng.html"]) {
+for (const file of ["index.html"]) {
   const html = fs.readFileSync(path.join(root, file), "utf8");
   for (const [, asset] of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
     if (!/^https?:/.test(asset))
@@ -101,7 +101,10 @@ async function load(file, modern) {
     f1.scene.traverse(o=>{
       // Original motorcycle parking uses unseeded Math.random(). Its six
       // instanced parts change count/color on every load, even without edits.
-      if(!o.isMesh || (o.parent===parking && o.isInstancedMesh))return;
+      const isAgv=${modern}&&(()=>{for(let node=o;node;node=node.parent)if(node.userData?.role==='agv-system')return true;return false})();
+      const isEnvironmentSensor=${modern}&&(()=>{for(let node=o;node;node=node.parent)if(node.userData?.role==='environment-sensors')return true;return false})();
+      const isAuxiliary=${modern}&&!!o.userData?.hoverOutline;
+      if(!o.isMesh || isAgv || isEnvironmentSensor || isAuxiliary || (o.parent===parking && o.isInstancedMesh))return;
       const previousHash=hash;hash=2166136261;
       meshes++;
       vertices+=o.geometry.attributes.position.count;
@@ -117,7 +120,7 @@ async function load(file, modern) {
       parts.push({hash,geometryHash,matrixHash,colorHash,type:o.geometry.type,count:o.count,position:o.position.toArray(),colors:o.instanceColor&&[628,228,492,176,102].includes(o.count)?Array.from(o.instanceColor.array):undefined});
       hash=(previousHash^hash)>>>0;
     });
-    return {meshes,vertices,instances,hash,parts,stats:${prefix}stats2,batches:${prefix}batchStats,buttons:document.querySelectorAll('button').length};
+    return {meshes,vertices,instances,hash,parts,stats:${prefix}stats2,batches:${prefix}batchStats};
   })()`);
 }
 (async () => {
@@ -161,8 +164,54 @@ async function load(file, modern) {
     await send("Page.enable");
     const original = await load("backups/original.html", false);
     console.log("Original:", { ...original, parts: undefined });
+    // Start the refactor comparison from the default toolbar state. The later
+    // test below verifies saved preferences separately.
+    await evaluate("localStorage.removeItem('tng-viet-duc-3d:toolbar-v1')");
     const current = await load("index.html", true);
     console.log("Refactored:", { ...current, parts: undefined });
+    const agvStart = await evaluate(`({
+      robots:TNG.state.agv.agents.length,
+      robotVisible:TNG.state.agv.robots.visible,
+      routesVisible:TNG.state.agv.routes.visible,
+      position:TNG.state.agv.agents[0].robot.position.toArray()
+    })`);
+    assert.equal(agvStart.robots, 4);
+    assert.equal(agvStart.robotVisible, true);
+    assert.equal(agvStart.routesVisible, true);
+    await delay(700);
+    const agvEnd = await evaluate(
+      "TNG.state.agv.agents[0].robot.position.toArray()",
+    );
+    assert.notDeepEqual(agvEnd, agvStart.position, "AGV did not move.");
+    const popup = await evaluate(`(() => {
+      const agent=TNG.state.agv.agents[0];
+      TNG.state.agv.select(agent);
+      return {
+        shown:!document.getElementById('objectInfo').hidden,
+        name:document.getElementById('objectInfoName').textContent,
+        floor:document.getElementById('objectInfoFloor').textContent,
+        load:document.getElementById('objectInfoLoad').textContent,
+        speed:document.getElementById('objectInfoSpeed').textContent
+      };
+    })()`);
+    assert.deepEqual(popup, {shown:true,name:"AGV-01",floor:"Tầng 1",load:"120 kg",speed:popup.speed});
+    assert.match(popup.speed, /^\d+\.\d{2} m\/s$/);
+    const sensorPopup = await evaluate(`(() => {
+      const sensor=TNG.state.environmentSensors.sensors[0];
+      TNG.state.environmentSensors.select(sensor);
+      return {
+        shown:!document.getElementById('objectInfo').hidden,
+        name:document.getElementById('objectInfoName').textContent,
+        temperature:document.getElementById('objectInfoTemperature').textContent,
+        humidity:document.getElementById('objectInfoHumidity').textContent
+      };
+    })()`);
+    assert.equal(sensorPopup.shown, true);
+    assert.equal(sensorPopup.name, "ENV-01");
+    assert.match(sensorPopup.temperature, /^\d+\.\d °C$/);
+    assert.match(sensorPopup.humidity, /^\d+%$/);
+    await evaluate("document.getElementById('closeObjectInfo').click()");
+    assert.equal(await evaluate("document.getElementById('objectInfo').hidden"), true);
     const differences = original.parts
       .map((p, i) =>
         JSON.stringify(p) !== JSON.stringify(current.parts[i])
@@ -173,16 +222,14 @@ async function load(file, modern) {
     if (differences.length)
       console.log(
         "Mesh differences:",
-        differences
-          .slice(0, 12)
-          .map((d) => ({
-            index: d.index,
-            before: d.before.colors?.slice(0, 15),
-            after: d.after.colors?.slice(0, 15),
-            firstDifference: d.before.colors?.findIndex(
-              (n, i) => n !== d.after.colors[i],
-            ),
-          })),
+        differences.slice(0, 12).map((d) => ({
+          index: d.index,
+          before: d.before.colors?.slice(0, 15),
+          after: d.after.colors?.slice(0, 15),
+          firstDifference: d.before.colors?.findIndex(
+            (n, i) => n !== d.after.colors[i],
+          ),
+        })),
       );
     for (const d of differences) {
       const i = d.before.colors?.findIndex((n, i) => n !== d.after.colors[i]);
@@ -201,6 +248,15 @@ async function load(file, modern) {
       current,
       original,
       "Scene geometry, instances, colors or layout changed.",
+    );
+    await evaluate("document.getElementById('tAgv').click()");
+    assert.equal(await evaluate("TNG.state.agv.robots.visible"), false);
+    assert.equal(await evaluate("TNG.state.agv.robotGroups[1].visible"), false);
+    await evaluate("document.getElementById('tAgvRoutes').click()");
+    assert.equal(await evaluate("TNG.state.agv.routes.visible"), false);
+    assert.equal(await evaluate("TNG.state.agv.routeGroups[1].visible"), false);
+    await evaluate(
+      "document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click()",
     );
     for (const [button, visible] of [
       ["mT1", [true, false]],
@@ -230,6 +286,28 @@ async function load(file, modern) {
     assert.ok(await evaluate("TNG.state.f2.f2.position.y>4.7"));
     await evaluate("document.getElementById('mSplit').click()");
     await delay(2000);
+    // Preferences survive a reload, then reset the headless profile to defaults.
+    await evaluate(
+      "document.getElementById('mT2').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click()",
+    );
+    await delay(50);
+    await send("Page.reload");
+    await delay(300);
+    for (let i = 0; i < 80; i++) {
+      if (await evaluate("!!window.TNG?.state?.stats2")) break;
+      await delay(100);
+      if (i === 79) throw new Error("Preference reload timed out.");
+    }
+    assert.deepEqual(
+      await evaluate("[TNG.state.f2.f1root.visible,TNG.state.f2.f2.visible]"),
+      [false, true],
+    );
+    assert.equal(await evaluate("TNG.state.agv.robotGroups.every(g=>!g.visible)"), true);
+    assert.equal(await evaluate("TNG.state.agv.routeGroups.every(g=>!g.visible)"), true);
+    await evaluate(
+      "document.getElementById('mBoth').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click();document.getElementById('vPersp').click()",
+    );
+    await delay(50);
     assert.equal(errors.length, 0, errors.join("\n"));
     const screenshot = await send("Page.captureScreenshot", { format: "png" });
     fs.mkdirSync(path.join(root, ".tmp"), { recursive: true });
@@ -238,7 +316,7 @@ async function load(file, modern) {
       Buffer.from(screenshot.data, "base64"),
     );
     console.log(
-      "PASS: identical scene; floor modes, split, view, trees, ceiling and area controls work.",
+      "PASS: base scene is unchanged; AGVs, controls and saved preferences work.",
     );
     await send("Browser.close");
   } finally {

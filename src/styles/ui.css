@@ -269,19 +269,81 @@ ol.zones li button.on {
   background: rgba(255, 255, 255, .85)
 }
 
-.hint {
+.object-info {
   position: fixed;
   right: max(16px, env(safe-area-inset-right, 0px));
   top: calc(12px + env(safe-area-inset-top, 0px));
   z-index: 4;
-  font-size: 11.5px;
-  color: var(--muted);
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 6px 10px;
-  max-width: 230px;
-  line-height: 1.4
+  border-radius: 10px;
+  width: 244px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
+  overflow: hidden
+}
+
+.object-info[hidden] {
+  display: none
+}
+
+.object-info header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--line)
+}
+
+.object-info p {
+  margin: 0 0 3px;
+  color: var(--muted);
+  font: 600 10px var(--f-mono);
+  letter-spacing: .06em
+}
+
+.object-info h2 {
+  margin: 0;
+  font: 700 16px var(--f-ui)
+}
+
+.object-info header button {
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--chip-bg);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 20px
+}
+
+.object-info dl {
+  margin: 0;
+  padding: 6px 14px 10px
+}
+
+.object-info dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line)
+}
+
+.object-info dl div:last-child {
+  border-bottom: 0
+}
+
+.object-info dt {
+  color: var(--muted);
+  font-size: 12px
+}
+
+.object-info dd {
+  margin: 0;
+  color: var(--ink);
+  font: 600 12px var(--f-mono)
 }
 
 #loading[hidden] {
@@ -304,8 +366,8 @@ ol.zones li button.on {
     right: max(16px, env(safe-area-inset-right, 0px))
   }
 
-  .hint {
-    display: none
+  .object-info {
+    width: min(244px, calc(100vw - 32px))
   }
 
   .toolbar button {

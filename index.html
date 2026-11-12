@@ -45,10 +45,24 @@
       <ol class="zones" id="zones"></ol>
     </aside>
 
-    <div class="hint">
-      Kéo để xoay · cuộn/chụm để phóng to · chuột phải hoặc 2 ngón để di chuyển.
-      Bấm tên khu để bay tới.
-    </div>
+    <aside class="object-info" id="objectInfo" hidden aria-live="polite">
+      <header>
+        <div>
+          <p>THIẾT BỊ ĐANG CHỌN</p>
+          <h2 id="objectInfoName">AGV</h2>
+        </div>
+        <button id="closeObjectInfo" type="button" aria-label="Đóng thông tin">×</button>
+      </header>
+      <dl>
+        <div><dt>Tầng</dt><dd id="objectInfoFloor">—</dd></div>
+        <div><dt>Trạng thái</dt><dd id="objectInfoStatus">—</dd></div>
+        <div><dt>Pin</dt><dd id="objectInfoBattery">—</dd></div>
+        <div><dt>Hàng đang tải</dt><dd id="objectInfoLoad">—</dd></div>
+        <div><dt>Tốc độ</dt><dd id="objectInfoSpeed">—</dd></div>
+        <div><dt>Nhiệt độ</dt><dd id="objectInfoTemperature">—</dd></div>
+        <div><dt>Độ ẩm</dt><dd id="objectInfoHumidity">—</dd></div>
+      </dl>
+    </aside>
 
     <nav class="toolbar" aria-label="Chế độ xem">
       <button id="vExt" aria-pressed="false">Ngoại cảnh</button>
@@ -73,6 +87,8 @@
     <script src="src/components/storage/pallet-rack.js"></script>
     <script src="src/components/storage/shelf.js"></script>
     <script src="src/components/machines/cutting-table.js"></script>
+    <script src="src/components/machines/agv.js"></script>
+    <script src="src/components/machines/environment-sensor.js"></script>
     <script src="src/components/storage/crate.js"></script>
     <script src="src/components/storage/carton-stack.js"></script>
     <script src="src/components/storage/trolley.js"></script>
@@ -94,6 +110,10 @@
     <script src="src/areas/canteen/build.js"></script>
     <script src="src/core/static-batch.js"></script>
     <script src="src/features/floor-controls.js"></script>
+    <script src="src/features/agv.js"></script>
+    <script src="src/features/environment-sensors.js"></script>
+    <script src="src/features/hover-outline.js"></script>
+    <script src="src/features/preferences.js"></script>
     <script src="src/areas/floor-1/build.js"></script>
     <script src="src/areas/floor-2/build.js"></script>
     <script src="src/main.js"></script>
