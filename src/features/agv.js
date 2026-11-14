@@ -71,6 +71,7 @@
         speed: 0.042,
         load: 0xc4b1df,
         loadKg: 120,
+        task: "Vận chuyển hàng trên tuyến tầng 1",
       },
     ];
     const agents = [];
@@ -134,8 +135,10 @@
           curve,
           robot,
           speed: route.speed,
-          speedMs: length * route.speed * (shuttle ? 2 : 1),
+          speedMs: route.stalled ? 0 : length * route.speed * (shuttle ? 2 : 1),
+          stalled: !!route.stalled,
           loadKg: route.loadKg || 0,
+          task: route.task,
           battery: 82 + (((index + offset) * 7) % 14),
           id: `AGV-${String(agents.length + 1).padStart(2, "0")}`,
           floor: floorSystem === system ? "Tầng 1" : "Tầng 2",
@@ -151,7 +154,7 @@
     };
     addRoutes(routes, routeGroup, robotGroup, system);
 
-    // Hai AGV ở tầng 2 phục vụ các tổ may và khu văn phòng. Vì thuộc f2,
+    // Các AGV ở tầng 2 phục vụ các tổ may và khu văn phòng. Vì thuộc f2,
     // chúng tự nâng cùng tầng khi bật "Tách tầng".
     const floor2Routes = [
       {
@@ -163,6 +166,7 @@
         speed: 0.015,
         load: 0x9bc9ca,
         loadKg: 90,
+        task: "Vận chuyển hàng trên tuyến ngang tầng 2",
       },
       {
         color: 0x2f60b4,
@@ -173,6 +177,7 @@
         speed: 0.046,
         load: 0xe1bd91,
         loadKg: 105,
+        task: "Vận chuyển hàng trên tuyến dọc tầng 2",
       },
       {
         color: 0x2f60b4,
@@ -185,6 +190,19 @@
         speed: 0.015,
         load: 0xe1bd91,
         loadKg: 105,
+        task: "Vận chuyển hàng qua khu tầng 2",
+      },
+      {
+        color: 0x2f60b4,
+        points: [
+          [59.5, 20],
+          [59.5, -20],
+        ],
+        speed: 0.015,
+        load: 0xe1bd91,
+        loadKg: 105,
+        task: "Vận chuyển hàng bị chết giữa đường",
+        stalled: true,
       },
     ];
     addRoutes(
@@ -203,46 +221,191 @@
       battery: document.getElementById("objectInfoBattery"),
       load: document.getElementById("objectInfoLoad"),
       speed: document.getElementById("objectInfoSpeed"),
-      // temperature: document.getElementById("objectInfoTemperature"),
-      // humidity: document.getElementById("objectInfoHumidity"),
+      temperature: document.getElementById("objectInfoTemperature"),
+      humidity: document.getElementById("objectInfoHumidity"),
+    };
+    const showInfoFields = (sensor) => {
+      for (const field of [info.battery, info.load, info.speed])
+        field.parentElement.hidden = sensor;
+      for (const field of [info.temperature, info.humidity])
+        field.parentElement.hidden = !sensor;
+      info.speed.parentElement.style.borderBottom = sensor ? "" : "0";
     };
     let selectedAgent = null;
     const showInfo = (agent) => {
       selectedAgent = agent;
+      F1.followObject(agent.robot);
+      showInfoFields(false);
       info.root.hidden = false;
       info.name.textContent = agent.id;
       info.floor.textContent = agent.floor;
-      info.status.textContent = "Đang vận chuyển";
+      info.status.textContent = agent.stalled
+        ? "Cảnh báo: AGV dừng hoạt động"
+        : "Đang vận chuyển";
+      info.battery.textContent = `${Math.round(agent.battery)}%`;
       info.load.textContent = `${agent.loadKg} kg`;
       info.speed.textContent = `${agent.speedMs.toFixed(2)} m/s`;
-      // info.temperature.textContent = "—";
-      // info.humidity.textContent = "—";
     };
     const hideInfo = () => {
       selectedAgent = null;
+      F1.stopFollowing();
       info.root.hidden = true;
     };
     document.getElementById("closeObjectInfo").onclick = hideInfo;
     app.objectInfo = {
       show(data) {
         selectedAgent = null;
+        F1.stopFollowing();
+        showInfoFields(true);
         info.root.hidden = false;
         info.name.textContent = data.name;
         info.floor.textContent = data.floor;
         info.status.textContent = data.status;
-        info.battery.textContent = data.battery || "—";
-        info.load.textContent = data.load || "—";
-        info.speed.textContent = data.speed || "—";
-        // info.temperature.textContent = data.temperature || "—";
-        // info.humidity.textContent = data.humidity || "—";
+        info.temperature.textContent = data.temperature || "—";
+        info.humidity.textContent = data.humidity || "—";
       },
       close: hideInfo,
     };
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+    const hoverPosition = new THREE.Vector3();
+    const warningPosition = new THREE.Vector3();
+    const stage = document.getElementById("stage");
+    const hoverPanel = document.createElement("div");
+    hoverPanel.className = "agv-hover-panel";
+    hoverPanel.setAttribute("role", "tooltip");
+    hoverPanel.hidden = true;
+    hoverPanel.innerHTML =
+      '<strong class="agv-hover-name"></strong>' +
+      '<span class="agv-hover-status"></span>' +
+      '<span class="agv-hover-caption">Nhiệm vụ hiện tại</span>' +
+      '<span class="agv-hover-task"></span>';
+    stage.appendChild(hoverPanel);
+    const warningMarkers = agents
+      .filter((agent) => agent.stalled)
+      .map((agent) => {
+        const element = document.createElement("button");
+        element.type = "button";
+        element.className = "agv-warning-marker";
+        element.textContent = "!";
+        element.setAttribute("aria-label", `Đến ${agent.id} đang dừng hoạt động`);
+        element.title = `Đến ${agent.id} đang dừng hoạt động`;
+        element.addEventListener("click", () => showInfo(agent));
+        stage.appendChild(element);
+        agent.robot.userData.beaconMaterial.color.setHex(0xff4040);
+        agent.robot.userData.beaconMaterial.emissive.setHex(0xe02020);
+        return { agent, element };
+      });
+    const hoverName = hoverPanel.querySelector(".agv-hover-name");
+    const hoverStatus = hoverPanel.querySelector(".agv-hover-status");
+    const hoverTask = hoverPanel.querySelector(".agv-hover-task");
+    let hoveredAgent = null;
+    let pointerTarget = null;
+    let hoverTimeout = null;
+    const visibleInScene = (object) => {
+      for (let node = object; node; node = node.parent)
+        if (!node.visible) return false;
+      return true;
+    };
+    const setHoveredAgent = (agent) => {
+      if (!agent && !hoveredAgent) return;
+      clearTimeout(hoverTimeout);
+      hoverTimeout = null;
+      hoveredAgent = agent;
+      hoverPanel.hidden = !agent;
+      if (agent) {
+        hoverName.textContent = agent.id;
+        hoverTask.textContent = agent.task;
+        hoverTimeout = setTimeout(() => setHoveredAgent(null), 15000);
+      }
+      F1.invalidate();
+    };
+    const dismissHoverPanel = () => {
+      pointerTarget = null;
+      setHoveredAgent(null);
+    };
+    const findPointerTarget = () => {
+      const targets = [
+        ...agents.map((agent) => agent.robot),
+        ...(app.environmentSensors?.sensors || []).map((data) => data.sensor),
+      ].filter(visibleInScene);
+      targets.forEach((object) => object.updateWorldMatrix(true, false));
+      raycaster.setFromCamera(pointer, F1.camera);
+      const hit = raycaster.intersectObjects(targets, true)[0];
+      let object = hit?.object;
+      while (
+        object &&
+        !object.userData.agvAgent &&
+        !object.userData.environmentSensor
+      )
+        object = object.parent;
+      return (
+        object?.userData.agvAgent ||
+        object?.userData.environmentSensor ||
+        null
+      );
+    };
+    F1.labelRenderers.push(() => {
+      const canvas = F1.renderer.domElement;
+      for (const { agent, element } of warningMarkers) {
+        if (!visibleInScene(agent.robot)) {
+          element.hidden = true;
+          continue;
+        }
+        agent.robot.getWorldPosition(warningPosition);
+        warningPosition.y += 1.8;
+        warningPosition.project(F1.camera);
+        element.hidden =
+          warningPosition.z < -1 ||
+          warningPosition.z > 1 ||
+          Math.abs(warningPosition.x) > 1 ||
+          Math.abs(warningPosition.y) > 1;
+        if (element.hidden) continue;
+        element.style.left = `${((warningPosition.x + 1) * canvas.clientWidth) / 2}px`;
+        element.style.top = `${((1 - warningPosition.y) * canvas.clientHeight) / 2}px`;
+      }
+      if (!hoveredAgent) return;
+      hoveredAgent.robot.getWorldPosition(hoverPosition);
+      hoverPosition.y += hoveredAgent.stalled ? 3.3 : 1.8;
+      hoverPosition.project(F1.camera);
+      const stage = canvas;
+      if (
+        hoverPosition.z < -1 ||
+        hoverPosition.z > 1 ||
+        Math.abs(hoverPosition.x) > 1 ||
+        Math.abs(hoverPosition.y) > 1
+      ) {
+        hoverPanel.style.visibility = "hidden";
+        return;
+      }
+      hoverPanel.style.visibility = "visible";
+      const x = ((hoverPosition.x + 1) * stage.clientWidth) / 2;
+      const y = ((1 - hoverPosition.y) * stage.clientHeight) / 2;
+      hoverPanel.style.left = `${Math.max(120, Math.min(stage.clientWidth - 120, x))}px`;
+      hoverPanel.style.top = `${Math.max(112, y - (hoveredAgent.stalled ? 46 : 12))}px`;
+    });
     let pointerDown = null;
     const canvas = F1.renderer.domElement;
+    canvas.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch") return;
+      const bounds = canvas.getBoundingClientRect();
+      pointer.set(
+        ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+        -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
+      );
+      const target = findPointerTarget();
+      if (target === pointerTarget) return;
+      pointerTarget = target;
+      if (target?.robot) setHoveredAgent(target);
+      else if (target) setHoveredAgent(null);
+    });
+    canvas.addEventListener("pointerleave", () => {
+      pointerTarget = null;
+    });
+    document.addEventListener("pointerdown", dismissHoverPanel, true);
+    document.addEventListener("wheel", dismissHoverPanel, true);
+    document.addEventListener("keydown", dismissHoverPanel, true);
     canvas.addEventListener("pointerdown", (event) => {
       if (event.button === 0)
         pointerDown = { x: event.clientX, y: event.clientY };
@@ -281,6 +444,15 @@
         system.visible && robotGroup.visible && parent.visible;
       const floor2Active =
         floor2System.visible && floor2RobotGroup.visible && app.f2.f2.visible;
+      if (
+        selectedAgent &&
+        (!selectedAgent.robotsParent.visible ||
+          !selectedAgent.floorSystem.visible ||
+          !selectedAgent.floorSystem.parent.visible)
+      )
+        hideInfo();
+      if (hoveredAgent && !visibleInScene(hoveredAgent.robot))
+        dismissHoverPanel();
       if (!floor1Active && !floor2Active) return false;
       elapsed += dt;
       agents.forEach((agent, index) => {
@@ -292,6 +464,7 @@
           robotsParent,
           floorSystem,
           shuttle,
+          stalled,
         } = agent;
         if (
           !robotsParent.visible ||
@@ -300,26 +473,31 @@
         )
           return;
         const phase = (elapsed * speed + offset) % 1;
-        const u = shuttle ? 1 - Math.abs(phase * 2 - 1) : phase;
+        const u = stalled ? 0.5 : shuttle ? 1 - Math.abs(phase * 2 - 1) : phase;
         curve.getPointAt(u, point);
         curve.getTangentAt(u, tangent);
-        if (shuttle && phase >= 0.5) tangent.negate();
+        if (shuttle && phase >= 0.5 && !stalled) tangent.negate();
         robot.position.copy(point);
         robot.position.y = 0.02;
         robot.rotation.y = Math.atan2(tangent.x, tangent.z);
         robot.userData.beaconMaterial.emissiveIntensity =
           1.15 + Math.sin(elapsed * 7 + index) * 0.65;
-        agent.battery = Math.max(20, agent.battery - dt * 0.005);
+        if (!stalled)
+          agent.battery = Math.max(20, agent.battery - dt * 0.005);
       });
+      if (hoveredAgent) {
+        const warning = hoveredAgent.battery <= 25;
+        hoverStatus.textContent = hoveredAgent.stalled
+          ? "Cảnh báo: AGV dừng hoạt động"
+          : warning
+            ? "Cảnh báo: pin yếu"
+            : "Đang hoạt động";
+        hoverStatus.classList.toggle("warning", warning && !hoveredAgent.stalled);
+        hoverStatus.classList.toggle("critical", hoveredAgent.stalled);
+        F1.invalidate();
+      }
       if (selectedAgent) {
-        if (
-          !selectedAgent.robotsParent.visible ||
-          !selectedAgent.floorSystem.parent.visible
-        ) {
-          hideInfo();
-        } else {
-          info.battery.textContent = `${Math.round(selectedAgent.battery)}%`;
-        }
+        info.battery.textContent = `${Math.round(selectedAgent.battery)}%`;
       }
       return floor1Active || floor2Active;
     });

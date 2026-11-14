@@ -175,7 +175,7 @@ async function load(file, modern) {
       routesVisible:TNG.state.agv.routes.visible,
       position:TNG.state.agv.agents[0].robot.position.toArray()
     })`);
-    assert.equal(agvStart.robots, 4);
+    assert.equal(agvStart.robots, 5);
     assert.equal(agvStart.robotVisible, true);
     assert.equal(agvStart.routesVisible, true);
     await delay(700);
@@ -196,6 +196,23 @@ async function load(file, modern) {
     })()`);
     assert.deepEqual(popup, {shown:true,name:"AGV-01",floor:"Tầng 1",load:"120 kg",speed:popup.speed});
     assert.match(popup.speed, /^\d+\.\d{2} m\/s$/);
+    assert.deepEqual(
+      await evaluate("[...document.querySelectorAll('#objectInfoBattery, #objectInfoLoad, #objectInfoSpeed, #objectInfoTemperature, #objectInfoHumidity')].map(e => e.parentElement.hidden)"),
+      [false, false, false, true, true],
+    );
+    const failedAgv = await evaluate(`(() => {
+      document.querySelector('.agv-warning-marker').click();
+      return {
+        name:document.getElementById('objectInfoName').textContent,
+        status:document.getElementById('objectInfoStatus').textContent,
+        speed:document.getElementById('objectInfoSpeed').textContent
+      };
+    })()`);
+    assert.deepEqual(failedAgv, {
+      name: "AGV-05",
+      status: "Cảnh báo: AGV dừng hoạt động",
+      speed: "0.00 m/s",
+    });
     const sensorPopup = await evaluate(`(() => {
       const sensor=TNG.state.environmentSensors.sensors[0];
       TNG.state.environmentSensors.select(sensor);
@@ -210,6 +227,10 @@ async function load(file, modern) {
     assert.equal(sensorPopup.name, "ENV-01");
     assert.match(sensorPopup.temperature, /^\d+\.\d °C$/);
     assert.match(sensorPopup.humidity, /^\d+%$/);
+    assert.deepEqual(
+      await evaluate("[...document.querySelectorAll('#objectInfoBattery, #objectInfoLoad, #objectInfoSpeed, #objectInfoTemperature, #objectInfoHumidity')].map(e => e.parentElement.hidden)"),
+      [true, true, true, false, false],
+    );
     await evaluate("document.getElementById('closeObjectInfo').click()");
     assert.equal(await evaluate("document.getElementById('objectInfo').hidden"), true);
     const differences = original.parts

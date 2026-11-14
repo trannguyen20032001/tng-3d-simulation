@@ -269,6 +269,91 @@ ol.zones li button.on {
   background: rgba(255, 255, 255, .85)
 }
 
+.agv-hover-panel {
+  position: absolute;
+  z-index: 4;
+  width: 216px;
+  box-sizing: border-box;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.agv-hover-panel[hidden] {
+  display: none;
+}
+
+.agv-hover-name {
+  font: 700 13px var(--f-ui);
+}
+
+.agv-hover-status {
+  color: #117a45;
+  font-weight: 600;
+}
+
+.agv-hover-status.warning {
+  color: #b95a15;
+}
+
+.agv-hover-status.critical {
+  color: #d92d20;
+}
+
+.agv-warning-marker {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #d92d20;
+  border-radius: 50%;
+  background: #fff;
+  color: #d92d20;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, .25), 0 4px 12px rgba(0, 0, 0, .3);
+  font: 800 23px var(--f-ui);
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  animation: agv-warning-blink 1s steps(2, end) infinite;
+}
+
+.agv-warning-marker:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.agv-warning-marker[hidden] {
+  display: none;
+}
+
+@keyframes agv-warning-blink {
+  50% { opacity: .2; }
+}
+
+.agv-hover-caption {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.agv-hover-task {
+  font-weight: 600;
+}
+
 .object-info {
   position: fixed;
   right: max(16px, env(safe-area-inset-right, 0px));
@@ -329,6 +414,10 @@ ol.zones li button.on {
   gap: 16px;
   padding: 7px 0;
   border-bottom: 1px solid var(--line)
+}
+
+.object-info dl div[hidden] {
+  display: none;
 }
 
 .object-info dl div:last-child {

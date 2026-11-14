@@ -2716,6 +2716,10 @@ TNG.areas.buildFloor1 = function (app) {
       .setAttribute("aria-pressed", v ? "true" : "false");
   }
   let fly = null;
+  let followedObject = null;
+  const followPosition = new THREE.Vector3();
+  const followNextPosition = new THREE.Vector3();
+  const followDelta = new THREE.Vector3();
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   function flyTo(pos, target) {
     invalidate();
@@ -2734,7 +2738,19 @@ TNG.areas.buildFloor1 = function (app) {
       dur: 1100,
     };
   }
+  function followObject(object) {
+    followedObject = object;
+    object.updateWorldMatrix(true, false);
+    object.getWorldPosition(followPosition);
+    const target = followPosition.clone().add(new THREE.Vector3(0, 1, 0));
+    flyTo(target.clone().add(new THREE.Vector3(10, 9, 12)), target);
+  }
+  function stopFollowing() {
+    if (followedObject) fly = null;
+    followedObject = null;
+  }
   function setView(v) {
+    stopFollowing();
     const aspect = stage.clientWidth / stage.clientHeight,
       k = aspect < 1 ? 1.9 : 1;
     const ext = v === "ext";
@@ -2842,6 +2858,22 @@ TNG.areas.buildFloor1 = function (app) {
     lastFrame = now;
     let animating = false;
     for (const hook of frameHooks) animating = hook(dt, now) || animating;
+    if (followedObject) {
+      followedObject.updateWorldMatrix(true, false);
+      followedObject.getWorldPosition(followNextPosition);
+      followDelta.subVectors(followNextPosition, followPosition);
+      if (followDelta.lengthSq() > 0) {
+        if (fly) {
+          fly.p1.add(followDelta);
+          fly.t1.add(followDelta);
+        } else {
+          camera.position.add(followDelta);
+          controls.target.add(followDelta);
+        }
+        followPosition.copy(followNextPosition);
+        labelsDirty = true;
+      }
+    }
     if (fly) {
       const t = Math.min(1, (now - fly.s) / fly.dur),
         e = ease(t);
@@ -2937,6 +2969,8 @@ TNG.areas.buildFloor1 = function (app) {
     skyDome,
     ground,
     flyTo,
+    followObject,
+    stopFollowing,
     setView,
     setPressed,
     flowGroup,
