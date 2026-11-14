@@ -294,6 +294,48 @@ ol.zones li button.on {
   display: none;
 }
 
+.sensor-hover-panel {
+  position: absolute;
+  z-index: 4;
+  width: 200px;
+  box-sizing: border-box;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.sensor-hover-panel[hidden] {
+  display: none;
+}
+
+.sensor-hover-name {
+  margin-bottom: 2px;
+  font: 700 13px var(--f-ui);
+}
+
+.sensor-hover-panel span {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+}
+
+.sensor-hover-panel b {
+  color: var(--ink);
+  font: 600 12px var(--f-mono);
+}
+
 .agv-hover-name {
   font: 700 13px var(--f-ui);
 }
@@ -337,6 +379,35 @@ ol.zones li button.on {
 }
 
 .agv-warning-marker[hidden] {
+  display: none;
+}
+
+.sensor-warning-marker {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid #d92d20;
+  border-radius: 50%;
+  background: #fff;
+  color: #d92d20;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, .25), 0 4px 12px rgba(0, 0, 0, .3);
+  cursor: pointer;
+  font: 800 20px var(--f-ui);
+  line-height: 1;
+  animation: agv-warning-blink 1s steps(2, end) infinite;
+}
+
+.sensor-warning-marker:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.sensor-warning-marker[hidden] {
   display: none;
 }
 

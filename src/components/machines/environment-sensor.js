@@ -15,11 +15,16 @@
       emissiveIntensity: 0.75,
       roughness: 0.25,
     });
-    const led = new THREE.MeshStandardMaterial({
-      color: 0x5dff93,
-      emissive: 0x20d85d,
-      emissiveIntensity: 1.7,
-      roughness: 0.2,
+    const signalMaterial = new THREE.MeshStandardMaterial({
+      color: 0x00e85a,
+      emissive: 0x18b94d,
+      emissiveIntensity: 1.6,
+      roughness: 0.18,
+    });
+    const signalBase = new THREE.MeshStandardMaterial({
+      color: 0x263746,
+      roughness: 0.35,
+      metalness: 0.55,
     });
     const add = (geometry, material, x, y, z) => {
       const mesh = new THREE.Mesh(geometry, material);
@@ -30,27 +35,40 @@
     };
     add(new THREE.BoxGeometry(0.62, 0.84, 0.2), casing, 0, 0, 0);
     add(new THREE.BoxGeometry(0.45, 0.25, 0.025), screen, 0, 0.12, 0.112);
-    add(new THREE.SphereGeometry(0.045, 12, 8), led, 0.19, -0.22, 0.13);
     add(new THREE.CylinderGeometry(0.09, 0.09, 0.12, 16), casing, 0, -0.42, 0);
-    const haloMaterial = new THREE.MeshBasicMaterial({
+
+    // Đèn tháp báo trạng thái, đặt cao để dễ nhận biết trên mô hình nhà xưởng.
+    add(new THREE.CylinderGeometry(0.045, 0.045, 0.27, 12), signalBase, 0, 0.55, 0);
+    const signal = add(
+      new THREE.CylinderGeometry(0.13, 0.13, 0.18, 16),
+      signalMaterial,
+      0,
+      0.77,
+      0,
+    );
+    signal.name = "Sensor status signal";
+    const signalLight = new THREE.PointLight(0x48ff7a, 0.55, 2.4);
+    signalLight.position.set(0, 0.77, 0.14);
+    sensor.add(signalLight);
+    const signalBeamMaterial = new THREE.MeshBasicMaterial({
       color: 0x48ff7a,
       transparent: true,
-      opacity: 0.68,
-      wireframe: true,
+      opacity: 0.38,
+      blending: THREE.AdditiveBlending,
       depthWrite: false,
+      side: THREE.DoubleSide,
     });
-    const halo = new THREE.Mesh(
-      new THREE.SphereGeometry(0.6, 16, 12),
-      haloMaterial,
+    const signalBeam = new THREE.Mesh(
+      new THREE.SphereGeometry(0.48, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+      signalBeamMaterial,
     );
-    halo.name = "Sensor status halo";
-    sensor.add(halo);
-    const haloLight = new THREE.PointLight(0x48ff7a, 0.65, 3.2);
-    sensor.add(haloLight);
-    sensor.userData.indicatorMaterial = led;
-    sensor.userData.haloMaterial = haloMaterial;
-    sensor.userData.halo = halo;
-    sensor.userData.haloLight = haloLight;
+    signalBeam.name = "Sensor signal light dome";
+    signalBeam.position.set(0, 0.86, 0);
+    signalBeam.renderOrder = 1;
+    sensor.add(signalBeam);
+    sensor.userData.signalMaterial = signalMaterial;
+    sensor.userData.signalLight = signalLight;
+    sensor.userData.signalBeamMaterial = signalBeamMaterial;
     return sensor;
   };
 })();

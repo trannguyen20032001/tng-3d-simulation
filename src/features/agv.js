@@ -234,6 +234,7 @@
     let selectedAgent = null;
     const showInfo = (agent) => {
       selectedAgent = agent;
+      app.environmentSensors?.clearSelected();
       F1.followObject(agent.robot);
       showInfoFields(false);
       info.root.hidden = false;
@@ -255,7 +256,8 @@
     app.objectInfo = {
       show(data) {
         selectedAgent = null;
-        F1.stopFollowing();
+        if (data.followObject) F1.followObject(data.followObject);
+        else F1.stopFollowing();
         showInfoFields(true);
         info.root.hidden = false;
         info.name.textContent = data.name;
@@ -264,7 +266,10 @@
         info.temperature.textContent = data.temperature || "—";
         info.humidity.textContent = data.humidity || "—";
       },
-      close: hideInfo,
+      close() {
+        hideInfo();
+        app.environmentSensors?.clearSelected();
+      },
     };
 
     const raycaster = new THREE.Raycaster();
@@ -295,6 +300,8 @@
         stage.appendChild(element);
         agent.robot.userData.beaconMaterial.color.setHex(0xff4040);
         agent.robot.userData.beaconMaterial.emissive.setHex(0xe02020);
+        agent.robot.userData.beaconBeamMaterial.color.setHex(0xff3030);
+        agent.robot.userData.beaconLight.color.setHex(0xff3030);
         return { agent, element };
       });
     const hoverName = hoverPanel.querySelector(".agv-hover-name");
@@ -480,8 +487,10 @@
         robot.position.copy(point);
         robot.position.y = 0.02;
         robot.rotation.y = Math.atan2(tangent.x, tangent.z);
-        robot.userData.beaconMaterial.emissiveIntensity =
-          1.15 + Math.sin(elapsed * 7 + index) * 0.65;
+        const flash = 0.5 + Math.max(0, Math.sin(elapsed * 7 + index));
+        robot.userData.beaconMaterial.emissiveIntensity = 0.9 + flash * 1.4;
+        robot.userData.beaconBeamMaterial.opacity = 0.2 + flash * 0.42;
+        robot.userData.beaconLight.intensity = 0.35 + flash * 0.8;
         if (!stalled)
           agent.battery = Math.max(20, agent.battery - dt * 0.005);
       });

@@ -231,6 +231,23 @@ async function load(file, modern) {
       await evaluate("[...document.querySelectorAll('#objectInfoBattery, #objectInfoLoad, #objectInfoSpeed, #objectInfoTemperature, #objectInfoHumidity')].map(e => e.parentElement.hidden)"),
       [true, true, true, false, false],
     );
+    assert.equal(
+      await evaluate("TNG.state.environmentSensors.sensors[0].coverage.visible"),
+      true,
+      "Selected sensor measurement area did not appear.",
+    );
+    const criticalSensor = await evaluate(`(() => {
+      const marker=document.querySelector('.sensor-warning-marker[data-sensor-id="ENV-06"]');
+      marker.click();
+      return {
+        name:document.getElementById('objectInfoName').textContent,
+        status:document.getElementById('objectInfoStatus').textContent
+      };
+    })()`);
+    assert.deepEqual(criticalSensor, {
+      name: "ENV-06",
+      status: "Vượt ngưỡng cảnh báo",
+    });
     await evaluate("document.getElementById('closeObjectInfo').click()");
     assert.equal(await evaluate("document.getElementById('objectInfo').hidden"), true);
     const differences = original.parts
@@ -313,9 +330,15 @@ async function load(file, modern) {
     );
     await delay(50);
     await send("Page.reload");
-    await delay(300);
+    // Wait for navigation to replace the old document before reading TNG again.
+    await delay(1500);
     for (let i = 0; i < 80; i++) {
-      if (await evaluate("!!window.TNG?.state?.stats2")) break;
+      if (
+        await evaluate(
+          "document.readyState === 'complete' && !!window.TNG?.state?.stats2",
+        )
+      )
+        break;
       await delay(100);
       if (i === 79) throw new Error("Preference reload timed out.");
     }

@@ -49,6 +49,25 @@
       -0.42,
     );
     beacon.userData.beacon = true;
+    const beaconBeamMaterial = new THREE.MeshBasicMaterial({
+      color: 0x159dff,
+      transparent: true,
+      opacity: 0.38,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const beaconBeam = new THREE.Mesh(
+      new THREE.SphereGeometry(0.58, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+      beaconBeamMaterial,
+    );
+    beaconBeam.name = "AGV beacon light dome";
+    beaconBeam.position.set(0, 0.91, -0.42);
+    beaconBeam.renderOrder = 1;
+    agv.add(beaconBeam);
+    const beaconLight = new THREE.PointLight(0x159dff, 0.7, 3.2);
+    beaconLight.position.set(0, 0.96, -0.42);
+    agv.add(beaconLight);
 
     for (const x of [-0.56, 0.56]) {
       for (const z of [-0.52, 0.52]) {
@@ -72,6 +91,8 @@
       );
 
     agv.userData.beaconMaterial = beaconMaterial;
+    agv.userData.beaconBeamMaterial = beaconBeamMaterial;
+    agv.userData.beaconLight = beaconLight;
     return agv;
   };
 })();
