@@ -1,6 +1,46 @@
 (function () {
   "use strict";
 
+  TNG.core.createAgvRoute = function createAgvRoute(points) {
+    if (!points.length) throw new Error("AGV route requires at least one point.");
+    const closed = points.length > 1 && points[0].equals(points[points.length - 1]);
+    const segments = [];
+    let length = 0;
+    for (let index = 1; index < points.length; index++) {
+      const segmentLength = points[index - 1].distanceTo(points[index]);
+      if (segmentLength === 0) continue;
+      length += segmentLength;
+      segments.push({
+        start: points[index - 1],
+        end: points[index],
+        length: segmentLength,
+        endDistance: length,
+      });
+    }
+    return {
+      closed,
+      length,
+      sample(progress, position, direction) {
+        if (!segments.length) {
+          position.copy(points[0]);
+          direction.set(0, 0, 0);
+          return;
+        }
+        const distance = Math.max(0, Math.min(1, progress)) * length;
+        const segment =
+          segments.find((item) => distance < item.endDistance) || segments[segments.length - 1];
+        const fraction = (distance - segment.endDistance + segment.length) / segment.length;
+        position.lerpVectors(segment.start, segment.end, fraction);
+        direction.subVectors(segment.end, segment.start).normalize();
+      },
+      samplePhase(phase, position, direction, stalled = false) {
+        const progress = stalled ? 0.5 : closed ? phase : 1 - Math.abs(phase * 2 - 1);
+        this.sample(progress, position, direction);
+        if (!closed && phase >= 0.5 && !stalled) direction.negate();
+      },
+    };
+  };
+
   TNG.features.setupAgv = function setupAgv(app) {
     const F1 = app.f1;
     const parent = app.f2.f1root;
@@ -87,10 +127,10 @@
         const points = route.points.map(
           ([x, z]) => new THREE.Vector3(x, 0.075, z),
         );
-        const shuttle = points.length === 2;
-        const linePoints = shuttle ? points : [...points, points[0].clone()];
+        const path = TNG.core.createAgvRoute(points);
+        const shuttle = !path.closed;
         const lineGeometry = new THREE.BufferGeometry().setFromPoints(
-          linePoints,
+          points,
         );
         const line = new THREE.Line(
           lineGeometry,
@@ -121,18 +161,15 @@
           routesParent.add(stop);
         }
 
-        const curve = shuttle
-          ? new THREE.LineCurve3(points[0], points[1])
-          : new THREE.CatmullRomCurve3(points, true, "centripetal");
         const robot = TNG.components.createAgv({
           color: route.color,
           loadColor: route.load,
         });
         robot.scale.setScalar(0.92);
         robotsParent.add(robot);
-        const length = curve.getLength();
+        const length = path.length;
         const agent = {
-          curve,
+          path,
           robot,
           speed: route.speed,
           speedMs: route.stalled ? 0 : length * route.speed * (shuttle ? 2 : 1),
@@ -160,10 +197,25 @@
       {
         color: 0x2f60b4,
         points: [
-          [-75.5, 17.5],
-          [59.5, 17.5],
+          [-75.5, -30.5],
+          [-75.5, 17],
+          [59.5, 17],
+          [59.5, 35],
         ],
-        speed: 0.015,
+        speed: 0.010,
+        load: 0x9bc9ca,
+        loadKg: 90,
+        task: "Vận chuyển hàng trên tuyến ngang tầng 2",
+      },
+      {
+        color: 0x2f60b4,
+        points: [
+          [-75.5, 30.5],
+          [-75.5, 18.5],
+          [59.5, 18.5],
+          [59.5, 35],
+        ],
+        speed: 0.010,
         load: 0x9bc9ca,
         loadKg: 90,
         task: "Vận chuyển hàng trên tuyến ngang tầng 2",
@@ -243,7 +295,7 @@
       info.floor.textContent = agent.floor;
       info.status.textContent = agent.stalled
         ? "Cảnh báo: AGV dừng hoạt động"
-        : "Đang vận chuyển";
+        : agent.path.length === 0 ? "Đang đứng yên" : "Đang vận chuyển";
       info.battery.textContent = `${Math.round(agent.battery)}%`;
       info.load.textContent = `${agent.loadKg} kg`;
       info.speed.textContent = `${agent.speedMs.toFixed(2)} m/s`;
@@ -332,7 +384,9 @@
     };
     const findPointerTarget = () => {
       const object = app.interaction.pickDevice(pointer);
-      return object?.userData.agvAgent || object?.userData.environmentSensor || null;
+      return (
+        object?.userData.agvAgent || object?.userData.environmentSensor || null
+      );
     };
     F1.overlayRenderers.push(() => {
       const canvas = F1.renderer.domElement;
@@ -435,13 +489,12 @@
       if (shouldUpdatePanel) lastPanelUpdate = elapsed;
       agents.forEach((agent, index) => {
         const {
-          curve,
+          path,
           robot,
           speed,
           offset,
           robotsParent,
           floorSystem,
-          shuttle,
           stalled,
         } = agent;
         if (
@@ -451,19 +504,15 @@
         )
           return;
         const phase = (elapsed * speed + offset) % 1;
-        const u = stalled ? 0.5 : shuttle ? 1 - Math.abs(phase * 2 - 1) : phase;
-        curve.getPointAt(u, point);
-        curve.getTangentAt(u, tangent);
-        if (shuttle && phase >= 0.5 && !stalled) tangent.negate();
+        path.samplePhase(phase, point, tangent, stalled);
         robot.position.copy(point);
         robot.position.y = 0.02;
-        robot.rotation.y = Math.atan2(tangent.x, tangent.z);
+        if (tangent.lengthSq() > 0) robot.rotation.y = Math.atan2(tangent.x, tangent.z);
         const flash = 0.5 + Math.max(0, Math.sin(elapsed * 7 + index));
         robot.userData.beaconMaterial.emissiveIntensity = 0.9 + flash * 1.4;
         robot.userData.beaconBeamMaterial.opacity = 0.2 + flash * 0.42;
         robot.userData.beaconLight.intensity = 0.35 + flash * 0.8;
-        if (!stalled)
-          agent.battery = Math.max(20, agent.battery - dt * 0.005);
+        if (!stalled) agent.battery = Math.max(20, agent.battery - dt * 0.005);
       });
       if (hoveredAgent && shouldUpdatePanel) {
         const warning = hoveredAgent.battery <= 25;
@@ -471,8 +520,11 @@
           ? "Cảnh báo: AGV dừng hoạt động"
           : warning
             ? "Cảnh báo: pin yếu"
-            : "Đang hoạt động";
-        hoverStatus.classList.toggle("warning", warning && !hoveredAgent.stalled);
+            : hoveredAgent.path.length === 0 ? "Đang đứng yên" : "Đang hoạt động";
+        hoverStatus.classList.toggle(
+          "warning",
+          warning && !hoveredAgent.stalled,
+        );
         hoverStatus.classList.toggle("critical", hoveredAgent.stalled);
       }
       if (selectedAgent && shouldUpdatePanel) {

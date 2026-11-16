@@ -79,6 +79,20 @@ Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ 
 
 ## Quy tắc AGV
 
+### Tuyến và cách di chuyển
+
+- Cấu hình tuyến bằng danh sách `points` trong `src/features/agv.js`.
+- Một điểm: AGV đứng yên tại điểm đó, tốc độ bằng 0.
+- Tuyến hở hai điểm `A, B`: chạy `A → B → A → B…`.
+- Tuyến hở từ ba điểm, ví dụ `A, B, C, D`: chạy
+  `A → B → C → D → C → B → A…`, quay lại theo đúng các đoạn đã đi.
+- Chỉ chạy vòng khi điểm cuối trùng tọa độ điểm đầu. Ví dụ `A, B, C, A`:
+  chạy `A → B → C → A → B…`.
+- AGV di chuyển thẳng trên từng đoạn nối hai điểm liên tiếp, trùng với line tuyến;
+  không bo cong góc hoặc tự thêm đoạn nối từ điểm cuối về điểm đầu.
+- Các điểm liên tiếp trùng nhau được bỏ qua khi tính quãng đường; tuyến toàn điểm
+  trùng nhau được xử lý như tuyến một điểm. AGV gặp lỗi vẫn dừng giữa tuyến.
+
 ### Chọn AGV
 
 Khi bấm vào AGV, popup thông tin hiển thị:

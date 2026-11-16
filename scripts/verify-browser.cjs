@@ -325,6 +325,49 @@ async function load(file, modern) {
     assert.equal(await evaluate("[...document.querySelectorAll('.sewing-team-warning')].every(e=>e.hidden)"), true);
     await evaluate("document.getElementById('mBoth').click()");
     await evaluate("TNG.state.sewingTeams.clear()");
+    const routeChecks = await evaluate(`(() => {
+      const make = coords => TNG.core.createAgvRoute(
+        coords.map(([x,z]) => new THREE.Vector3(x,0,z)));
+      const sample = (route, phase, stalled=false) => {
+        const p=new THREE.Vector3(), d=new THREE.Vector3();
+        route.samplePhase(phase,p,d,stalled);
+        return {position:p.toArray().map(n=>+n.toFixed(6)),
+          direction:d.toArray().map(n=>+n.toFixed(6))};
+      };
+      const single=make([[2,3]]), pair=make([[0,0],[10,0]]);
+      const open=make([[0,0],[10,0],[10,10],[20,10]]);
+      const loop=make([[0,0],[3,0],[3,4],[0,0]]);
+      const repeated=make([[0,0],[0,0],[10,0]]);
+      const coincident=make([[2,3],[2,3],[2,3]]);
+      return {
+        single:[0,0.25,0.75].map(t=>sample(single,t)),
+        pair:[0,0.25,0.5,0.75].map(t=>sample(pair,t)),
+        openClosed:open.closed,
+        open:[0,1/6,1/3,0.5,2/3,5/6].map(t=>sample(open,t).position),
+        straight:sample(open,0.25).position,
+        loopClosed:loop.closed,
+        loop:[0,0.25,7/12,1].map(t=>sample(loop,t).position),
+        repeated:sample(repeated,0.25).position,
+        coincident:sample(coincident,0.75),
+        stalled:sample(pair,0.1,true).position
+      };
+    })()`);
+    const stationary = {position:[2,0,3],direction:[0,0,0]};
+    assert.deepEqual(routeChecks.single, [stationary,stationary,stationary]);
+    assert.deepEqual(routeChecks.pair.map(s=>s.position),
+      [[0,0,0],[5,0,0],[10,0,0],[5,0,0]]);
+    assert.deepEqual(routeChecks.pair[1].direction, [1,0,0]);
+    assert.deepEqual(routeChecks.pair[3].direction, [-1,0,0]);
+    assert.equal(routeChecks.openClosed, false);
+    assert.deepEqual(routeChecks.open,
+      [[0,0,0],[10,0,0],[10,0,10],[20,0,10],[10,0,10],[10,0,0]]);
+    assert.deepEqual(routeChecks.straight, [10,0,5]);
+    assert.equal(routeChecks.loopClosed, true);
+    assert.deepEqual(routeChecks.loop, [[0,0,0],[3,0,0],[3,0,4],[0,0,0]]);
+    assert.deepEqual(routeChecks.repeated, [5,0,0]);
+    assert.deepEqual(routeChecks.coincident, stationary);
+    assert.deepEqual(routeChecks.stalled, [5,0,0]);
+    console.log("PASS: AGV straight routes, return trips, loops and stationary routes.");
     const agvStart = await evaluate(`({
       robots:TNG.state.agv.agents.length,
       robotVisible:TNG.state.agv.robots.visible,
