@@ -187,13 +187,9 @@
         (event.clientX - bounds.left) / bounds.width * 2 - 1,
         -(event.clientY - bounds.top) / bounds.height * 2 + 1,
       );
-      F1.scene.updateMatrixWorld(true);
+      group.updateWorldMatrix(true, true);
       raycaster.setFromCamera(pointer, F1.camera);
-      const devices = [
-        ...app.agv.agents.map((agent) => agent.robot),
-        ...app.environmentSensors.sensors.map((sensor) => sensor.sensor),
-      ].filter(visible);
-      if (raycaster.intersectObjects(devices, true).length) return null;
+      if (app.interaction.pickDevice(pointer)) return null;
       return raycaster.intersectObjects(teams.map((team) => team.area))[0]?.object.userData.sewingTeam;
     };
     canvas.addEventListener("pointermove", (event) => {
@@ -260,19 +256,17 @@
       if (!isEnabled) markers.forEach(({ marker }) => marker.hide());
       F1.invalidate();
     };
-    let lastIdleUpdate = -Infinity;
-    F1.frameHooks.push((_, now) => {
+    window.setInterval(() => {
+      if (!document.hidden && selected) updateIdleTime();
+    }, 1000);
+    F1.frameHooks.push(() => {
       if (!visible(group)) {
         if (current) clear();
         if (selected) closeDetails();
       }
-      if (selected && now - lastIdleUpdate >= 1000) {
-        updateIdleTime();
-        lastIdleUpdate = now;
-      }
-      return !!selected;
+      return false;
     });
-    F1.labelRenderers.push(() => {
+    F1.overlayRenderers.push(() => {
       if (current) {
         current.area.getWorldPosition(anchor);
         anchor.y += 2;

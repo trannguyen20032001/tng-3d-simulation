@@ -3,7 +3,6 @@
 
   TNG.features.createHoverOutline = function createHoverOutline(F1) {
     const targets = new Set();
-    const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const box = new THREE.Box3();
     const outline = new THREE.Box3Helper(box, 0x48ff7a);
@@ -28,7 +27,7 @@
         return;
       }
       current = object;
-      F1.scene.updateMatrixWorld(true);
+      object.updateWorldMatrix(true, true);
       box.setFromObject(object).expandByScalar(0.08);
       outline.visible = !box.isEmpty();
       F1.renderer.domElement.style.cursor = "pointer";
@@ -48,12 +47,8 @@
         ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
         -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
       );
-      raycaster.setFromCamera(pointer, F1.camera);
-      const hit = raycaster.intersectObjects(
-        [...targets].filter(isVisibleInScene),
-        true,
-      )[0];
-      update(hit ? findTarget(hit.object) : null);
+      const object = TNG.state.interaction.pickDevice(pointer);
+      update(object ? findTarget(object) : null);
     });
     canvas.addEventListener("pointerleave", () => update(null));
     F1.frameHooks.push((_, now) => {

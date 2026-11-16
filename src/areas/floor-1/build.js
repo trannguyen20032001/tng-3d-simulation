@@ -613,7 +613,9 @@ TNG.areas.buildFloor1 = function (app) {
   let labelsDirty = true,
     flowDirty = true;
   const frameHooks = [],
-    labelRenderers = [];
+    labelRenderers = [],
+    overlayRenderers = [];
+  app.performance = { frames: 0, frameCpuMs: 0, drawCalls: 0, triangles: 0 };
   function scheduleFrame() {
     if (!document.hidden && !frameId) frameId = requestAnimationFrame(tick);
   }
@@ -2856,6 +2858,7 @@ TNG.areas.buildFloor1 = function (app) {
     }
     const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 1 / 30;
     lastFrame = now;
+    const cpuStart = performance.now();
     let animating = false;
     for (const hook of frameHooks) animating = hook(dt, now) || animating;
     if (followedObject) {
@@ -2917,6 +2920,11 @@ TNG.areas.buildFloor1 = function (app) {
       for (const renderLabels of labelRenderers) renderLabels();
       labelsDirty = false;
     }
+    for (const renderOverlay of overlayRenderers) renderOverlay();
+    app.performance.frames++;
+    app.performance.frameCpuMs = performance.now() - cpuStart;
+    app.performance.drawCalls = renderer.info.render.calls;
+    app.performance.triangles = renderer.info.render.triangles;
     if (
       fly ||
       cameraChanged ||
@@ -2932,7 +2940,10 @@ TNG.areas.buildFloor1 = function (app) {
     invalidate();
   });
   // Bubble phase runs after the existing toolbar/zone handlers have changed the scene.
-  document.addEventListener("click", () => invalidate(true));
+  document.addEventListener("click", (event) => {
+    const shadowControls = ["tWalls", "tTrees", "tCeil2", "mT1", "mT2", "mBoth"];
+    invalidate(shadowControls.includes(event.target.closest("button")?.id));
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       cancelAnimationFrame(frameId);
@@ -2984,6 +2995,7 @@ TNG.areas.buildFloor1 = function (app) {
     invalidate,
     frameHooks,
     labelRenderers,
+    overlayRenderers,
     markFlowDirty: () => {
       flowDirty = true;
     },

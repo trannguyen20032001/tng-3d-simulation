@@ -273,7 +273,6 @@
       },
     };
 
-    const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const hoverPosition = new THREE.Vector3();
     const stage = document.getElementById("stage");
@@ -332,27 +331,10 @@
       setHoveredAgent(null);
     };
     const findPointerTarget = () => {
-      const targets = [
-        ...agents.map((agent) => agent.robot),
-        ...(app.environmentSensors?.sensors || []).map((data) => data.sensor),
-      ].filter(visibleInScene);
-      targets.forEach((object) => object.updateWorldMatrix(true, false));
-      raycaster.setFromCamera(pointer, F1.camera);
-      const hit = raycaster.intersectObjects(targets, true)[0];
-      let object = hit?.object;
-      while (
-        object &&
-        !object.userData.agvAgent &&
-        !object.userData.environmentSensor
-      )
-        object = object.parent;
-      return (
-        object?.userData.agvAgent ||
-        object?.userData.environmentSensor ||
-        null
-      );
+      const object = app.interaction.pickDevice(pointer);
+      return object?.userData.agvAgent || object?.userData.environmentSensor || null;
     };
-    F1.labelRenderers.push(() => {
+    F1.overlayRenderers.push(() => {
       const canvas = F1.renderer.domElement;
       for (const { agent, marker } of warningMarkers) {
         marker.update({
@@ -425,20 +407,14 @@
         ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
         -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
       );
-      F1.scene.updateMatrixWorld(true);
-      raycaster.setFromCamera(pointer, F1.camera);
-      const hit = raycaster.intersectObjects(
-        agents.map((agent) => agent.robot),
-        true,
-      )[0];
-      let object = hit?.object;
-      while (object && !object.userData.agvAgent) object = object.parent;
+      const object = app.interaction.pickDevice(pointer);
       if (object?.userData.agvAgent) showInfo(object.userData.agvAgent);
     });
 
     const point = new THREE.Vector3();
     const tangent = new THREE.Vector3();
     let elapsed = 0;
+    let lastPanelUpdate = -Infinity;
     F1.frameHooks.push((dt) => {
       const floor1Active =
         system.visible && robotGroup.visible && parent.visible;
@@ -455,6 +431,8 @@
         dismissHoverPanel();
       if (!floor1Active && !floor2Active) return false;
       elapsed += dt;
+      const shouldUpdatePanel = elapsed - lastPanelUpdate >= 1;
+      if (shouldUpdatePanel) lastPanelUpdate = elapsed;
       agents.forEach((agent, index) => {
         const {
           curve,
@@ -487,7 +465,7 @@
         if (!stalled)
           agent.battery = Math.max(20, agent.battery - dt * 0.005);
       });
-      if (hoveredAgent) {
+      if (hoveredAgent && shouldUpdatePanel) {
         const warning = hoveredAgent.battery <= 25;
         hoverStatus.textContent = hoveredAgent.stalled
           ? "Cảnh báo: AGV dừng hoạt động"
@@ -496,9 +474,8 @@
             : "Đang hoạt động";
         hoverStatus.classList.toggle("warning", warning && !hoveredAgent.stalled);
         hoverStatus.classList.toggle("critical", hoveredAgent.stalled);
-        F1.invalidate();
       }
-      if (selectedAgent) {
+      if (selectedAgent && shouldUpdatePanel) {
         info.battery.textContent = `${Math.round(selectedAgent.battery)}%`;
       }
       return floor1Active || floor2Active;

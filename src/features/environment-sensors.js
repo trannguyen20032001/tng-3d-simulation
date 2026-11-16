@@ -179,7 +179,6 @@
       });
       updateCoverage();
     };
-    const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const hoverPosition = new THREE.Vector3();
     const stage = document.getElementById("stage");
@@ -232,25 +231,10 @@
       setHoveredSensor(null);
     };
     const findPointerTarget = () => {
-      const targets = [
-        ...sensors.map((data) => data.sensor),
-        ...(app.agv?.agents || []).map((agent) => agent.robot),
-      ].filter(visibleInScene);
-      targets.forEach((object) => object.updateWorldMatrix(true, false));
-      raycaster.setFromCamera(pointer, F1.camera);
-      const hit = raycaster.intersectObjects(targets, true)[0];
-      let object = hit?.object;
-      while (
-        object &&
-        !object.userData.environmentSensor &&
-        !object.userData.agvAgent
-      )
-        object = object.parent;
-      return (
-        object?.userData.environmentSensor || object?.userData.agvAgent || null
-      );
+      const object = app.interaction.pickDevice(pointer);
+      return object?.userData.agvAgent || object?.userData.environmentSensor || null;
     };
-    F1.labelRenderers.push(() => {
+    F1.overlayRenderers.push(() => {
       const canvas = F1.renderer.domElement;
       for (const { data, marker } of warningMarkers) {
         marker.update({
@@ -320,48 +304,49 @@
         ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
         -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
       );
-      F1.scene.updateMatrixWorld(true);
-      raycaster.setFromCamera(pointer, F1.camera);
-      const hit = raycaster.intersectObjects(
-        sensors.map((data) => data.sensor),
-        true,
-      )[0];
-      let object = hit?.object;
-      while (object && !object.userData.environmentSensor)
-        object = object.parent;
+      const object = app.interaction.pickDevice(pointer);
       if (object?.userData.environmentSensor)
         showInfo(object.userData.environmentSensor);
     });
+    let lastTelemetryUpdate = -Infinity;
     F1.frameHooks.push((_, now) => {
+      const shouldUpdateTelemetry = now - lastTelemetryUpdate >= 1000;
+      if (shouldUpdateTelemetry) lastTelemetryUpdate = now;
       if (hoveredSensor && !visibleInScene(hoveredSensor.sensor))
         dismissHoverPanel();
       sensors.forEach((data) => {
+        if (!visibleInScene(data.sensor)) return;
         const previousAlert = data.alert;
-        data.currentTemperature =
-          data.temperature + Math.sin(now * 0.00035 + data.phase) * 0.35;
-        data.currentHumidity =
-          data.humidity + Math.sin(now * 0.00023 + data.phase + 1) * 2;
-        data.alert =
-          data.currentTemperature >= LIMITS.temperature.critical ||
-          data.currentHumidity >= LIMITS.humidity.critical
-            ? "critical"
-            : data.currentTemperature >= LIMITS.temperature.warning ||
-                data.currentHumidity >= LIMITS.humidity.warning
-              ? "warning"
-              : "normal";
+        if (shouldUpdateTelemetry) {
+          data.currentTemperature =
+            data.temperature + Math.sin(now * 0.00035 + data.phase) * 0.35;
+          data.currentHumidity =
+            data.humidity + Math.sin(now * 0.00023 + data.phase + 1) * 2;
+          data.alert =
+            data.currentTemperature >= LIMITS.temperature.critical ||
+            data.currentHumidity >= LIMITS.humidity.critical
+              ? "critical"
+              : data.currentTemperature >= LIMITS.temperature.warning ||
+                  data.currentHumidity >= LIMITS.humidity.warning
+                ? "warning"
+                : "normal";
+        }
         if (data.alert !== previousAlert) F1.invalidate();
         const status = STATUS[data.alert];
         const { signalMaterial, signalLight, signalBeamMaterial } =
           data.sensor.userData;
         const flash = Math.max(0, Math.sin(now * 0.009 + data.phase));
-        signalMaterial.color.setHex(status.color);
-        signalMaterial.emissive.setHex(status.color);
+        if (data.renderedAlert !== data.alert) {
+          signalMaterial.color.setHex(status.color);
+          signalMaterial.emissive.setHex(status.color);
+          signalLight.color.setHex(status.color);
+          signalBeamMaterial.color.setHex(status.color);
+          data.coverageFill.material.color.setHex(status.color);
+          data.coverageEdge.material.color.setHex(status.color);
+          data.renderedAlert = data.alert;
+        }
         signalMaterial.emissiveIntensity = 0.7 + flash * 2.5;
-        signalLight.color.setHex(status.color);
-        signalBeamMaterial.color.setHex(status.color);
         signalBeamMaterial.opacity = 0.2 + flash * 0.42;
-        data.coverageFill.material.color.setHex(status.color);
-        data.coverageEdge.material.color.setHex(status.color);
         signalLight.intensity =
           data.alert === "critical"
             ? 1.15
@@ -369,11 +354,11 @@
               ? 0.85
               : 0.6;
       });
-      if (hoveredSensor) {
+      if (hoveredSensor && shouldUpdateTelemetry) {
         hoverTemperature.textContent = `${hoveredSensor.currentTemperature.toFixed(1)} °C`;
         hoverHumidity.textContent = `${Math.round(hoveredSensor.currentHumidity)}%`;
       }
-      return floor1Group.visible || floor2Group.visible;
+      return sensors.some((data) => visibleInScene(data.sensor));
     });
     const button = document.createElement("button");
     button.id = "tEnvSensors";

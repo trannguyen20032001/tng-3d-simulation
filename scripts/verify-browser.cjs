@@ -170,6 +170,15 @@ async function load(file, modern) {
     await evaluate("localStorage.removeItem('tng-viet-duc-3d:toolbar-v1')");
     const current = await load("index.html", true);
     console.log("Refactored:", { ...current, parts: undefined });
+    const picking = await evaluate(`(() => {
+      const manager=TNG.state.interaction;
+      const before={...manager.stats};
+      manager.pickDevice(new THREE.Vector2(-10,-10));
+      manager.pickDevice(new THREE.Vector2(-10,-10));
+      return {raycasts:manager.stats.raycasts-before.raycasts,
+        hits:manager.stats.cacheHits-before.cacheHits};
+    })()`);
+    assert.deepEqual(picking, { raycasts: 1, hits: 1 });
     assert.equal(await evaluate("TNG.state.sewingTeams.teams.length"), 24);
     const teamHover = await evaluate(`(() => {
       const f=TNG.state.f1, team=TNG.state.sewingTeams.teams[12];
