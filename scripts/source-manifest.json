@@ -3,6 +3,7 @@
   "src/core/textures.js",
   "src/core/random.js",
   "src/core/coordinates.js",
+  "src/components/ui/warning-marker.js",
   "src/components/people/standing-person.js",
   "src/components/storage/pallet-rack.js",
   "src/components/storage/shelf.js",

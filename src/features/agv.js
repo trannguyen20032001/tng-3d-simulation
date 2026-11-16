@@ -276,7 +276,6 @@
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const hoverPosition = new THREE.Vector3();
-    const warningPosition = new THREE.Vector3();
     const stage = document.getElementById("stage");
     const hoverPanel = document.createElement("div");
     hoverPanel.className = "agv-hover-panel";
@@ -291,19 +290,17 @@
     const warningMarkers = agents
       .filter((agent) => agent.stalled)
       .map((agent) => {
-        const element = document.createElement("button");
-        element.type = "button";
-        element.className = "agv-warning-marker";
-        element.textContent = "!";
-        element.setAttribute("aria-label", `Đến ${agent.id} đang dừng hoạt động`);
-        element.title = `Đến ${agent.id} đang dừng hoạt động`;
-        element.addEventListener("click", () => showInfo(agent));
-        stage.appendChild(element);
+        const marker = TNG.components.createWarningMarker({
+          stage,
+          className: "agv-warning-marker warning-marker--large",
+          label: `Đến ${agent.id} đang dừng hoạt động`,
+          onActivate: () => showInfo(agent),
+        });
         agent.robot.userData.beaconMaterial.color.setHex(0xff4040);
         agent.robot.userData.beaconMaterial.emissive.setHex(0xe02020);
         agent.robot.userData.beaconBeamMaterial.color.setHex(0xff3030);
         agent.robot.userData.beaconLight.color.setHex(0xff3030);
-        return { agent, element };
+        return { agent, marker };
       });
     const hoverName = hoverPanel.querySelector(".agv-hover-name");
     const hoverStatus = hoverPanel.querySelector(".agv-hover-status");
@@ -357,22 +354,16 @@
     };
     F1.labelRenderers.push(() => {
       const canvas = F1.renderer.domElement;
-      for (const { agent, element } of warningMarkers) {
-        if (!visibleInScene(agent.robot)) {
-          element.hidden = true;
-          continue;
-        }
-        agent.robot.getWorldPosition(warningPosition);
-        warningPosition.y += 1.8;
-        warningPosition.project(F1.camera);
-        element.hidden =
-          warningPosition.z < -1 ||
-          warningPosition.z > 1 ||
-          Math.abs(warningPosition.x) > 1 ||
-          Math.abs(warningPosition.y) > 1;
-        if (element.hidden) continue;
-        element.style.left = `${((warningPosition.x + 1) * canvas.clientWidth) / 2}px`;
-        element.style.top = `${((1 - warningPosition.y) * canvas.clientHeight) / 2}px`;
+      for (const { agent, marker } of warningMarkers) {
+        marker.update({
+          camera: F1.camera,
+          canvas,
+          isVisible: visibleInScene(agent.robot),
+          getWorldPosition(position) {
+            agent.robot.getWorldPosition(position);
+            position.y += 1.8;
+          },
+        });
       }
       if (!hoveredAgent) return;
       hoveredAgent.robot.getWorldPosition(hoverPosition);

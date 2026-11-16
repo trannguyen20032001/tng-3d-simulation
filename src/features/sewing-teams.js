@@ -233,17 +233,14 @@
       if (event.key === "Escape") closeDetails();
     });
     const markers = teams.map((team) => {
-      const element = document.createElement("button");
-      element.type = "button";
-      element.className = "sensor-warning-marker sewing-team-warning";
-      element.dataset.teamId = team.id;
-      element.textContent = "!";
-      element.hidden = true;
-      element.title = `${team.name}: đạt ${percent(team.output / team.target)} mục tiêu`;
-      element.setAttribute("aria-label", element.title);
-      element.onclick = () => select(team, true);
-      stage.appendChild(element);
-      return { team, element };
+      const marker = TNG.components.createWarningMarker({
+        stage,
+        className: "sensor-warning-marker sewing-team-warning",
+        data: { teamId: team.id },
+        label: `${team.name}: đạt ${percent(team.output / team.target)} mục tiêu`,
+        onActivate: () => select(team, true),
+      });
+      return { team, marker };
     });
     const button = document.createElement("button");
     button.id = "tSewingBalance";
@@ -260,7 +257,7 @@
         team.floor.visible = isEnabled;
         updateHighlight(team);
       });
-      if (!isEnabled) markers.forEach(({ element }) => { element.hidden = true; });
+      if (!isEnabled) markers.forEach(({ marker }) => marker.hide());
       F1.invalidate();
     };
     let lastIdleUpdate = -Infinity;
@@ -284,12 +281,15 @@
         panel.style.left = `${Math.max(155, Math.min(canvas.clientWidth - 155, (anchor.x + 1) * canvas.clientWidth / 2))}px`;
         panel.style.top = `${Math.max(145, (1 - anchor.y) * canvas.clientHeight / 2)}px`;
       }
-      markers.forEach(({ team, element }) => {
-        anchor.set(team.x, 4.9, team.headZ).applyMatrix4(group.matrixWorld).project(F1.camera);
-        element.hidden = !isEnabled || !visible(group) || team.output / team.target >= 0.85 ||
-          Math.abs(anchor.x) > 1 || Math.abs(anchor.y) > 1 || Math.abs(anchor.z) > 1;
-        element.style.left = `${(anchor.x + 1) * canvas.clientWidth / 2}px`;
-        element.style.top = `${(1 - anchor.y) * canvas.clientHeight / 2}px`;
+      markers.forEach(({ team, marker }) => {
+        marker.update({
+          camera: F1.camera,
+          canvas,
+          isVisible: isEnabled && visible(group) && team.output / team.target < 0.85,
+          getWorldPosition(position) {
+            position.set(team.x, 4.9, team.headZ).applyMatrix4(group.matrixWorld);
+          },
+        });
       });
     });
     app.sewingTeams = { teams, clear, select, closeDetails, getAchievementColor };

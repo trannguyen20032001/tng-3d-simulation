@@ -33,6 +33,7 @@ Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ 
 
 ### 4. Cảnh báo và dấu chấm than
 
+- Dấu chấm than cảnh báo dùng component tái sử dụng `src/components/ui/warning-marker.js`. Component phụ trách phần tử giao diện, hỗ trợ bàn phím, định vị theo camera và ẩn khi ngoài khung nhìn; từng loại đối tượng chỉ cung cấp điều kiện cảnh báo, vị trí neo và hành động khi bấm.
 - Đối tượng gặp lỗi hoặc đạt điều kiện cảnh báo nghiêm trọng của loại đó sẽ có dấu **chấm than đỏ nhấp nháy** phía trên. Dấu cảnh báo bám theo vị trí đối tượng và camera.
 - Click dấu chấm than có cùng hành vi với click trực tiếp đối tượng: chọn, mở bảng chi tiết, đưa camera đến và bám theo đối tượng bị cảnh báo.
 - Điều kiện phát sinh và hết cảnh báo được cấu hình riêng theo loại đối tượng; không dùng chung một ngưỡng nghiệp vụ cho tất cả thiết bị.

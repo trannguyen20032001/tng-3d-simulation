@@ -182,24 +182,16 @@
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const hoverPosition = new THREE.Vector3();
-    const warningPosition = new THREE.Vector3();
     const stage = document.getElementById("stage");
     const warningMarkers = sensors.map((data) => {
-      const element = document.createElement("button");
-      element.type = "button";
-      element.className = "sensor-warning-marker";
-      element.textContent = "!";
-      element.hidden = true;
-      element.dataset.sensorId = data.id;
-      element.dataset.sensorId = data.id;
-      element.setAttribute(
-        "aria-label",
-        `Đến ${data.id} đang vượt ngưỡng cảnh báo`,
-      );
-      element.title = `Đến ${data.id} đang vượt ngưỡng cảnh báo`;
-      element.addEventListener("click", () => showInfo(data));
-      stage.appendChild(element);
-      return { data, element };
+      const marker = TNG.components.createWarningMarker({
+        stage,
+        className: "sensor-warning-marker",
+        data: { sensorId: data.id },
+        label: `Đến ${data.id} đang vượt ngưỡng cảnh báo`,
+        onActivate: () => showInfo(data),
+      });
+      return { data, marker };
     });
     const hoverPanel = document.createElement("div");
     hoverPanel.className = "sensor-hover-panel";
@@ -260,22 +252,16 @@
     };
     F1.labelRenderers.push(() => {
       const canvas = F1.renderer.domElement;
-      for (const { data, element } of warningMarkers) {
-        if (data.alert !== "critical" || !visibleInScene(data.sensor)) {
-          element.hidden = true;
-          continue;
-        }
-        data.sensor.getWorldPosition(warningPosition);
-        warningPosition.y += 1.55;
-        warningPosition.project(F1.camera);
-        element.hidden =
-          warningPosition.z < -1 ||
-          warningPosition.z > 1 ||
-          Math.abs(warningPosition.x) > 1 ||
-          Math.abs(warningPosition.y) > 1;
-        if (element.hidden) continue;
-        element.style.left = `${((warningPosition.x + 1) * canvas.clientWidth) / 2}px`;
-        element.style.top = `${((1 - warningPosition.y) * canvas.clientHeight) / 2}px`;
+      for (const { data, marker } of warningMarkers) {
+        marker.update({
+          camera: F1.camera,
+          canvas,
+          isVisible: data.alert === "critical" && visibleInScene(data.sensor),
+          getWorldPosition(position) {
+            data.sensor.getWorldPosition(position);
+            position.y += 1.55;
+          },
+        });
       }
       if (!hoveredSensor) return;
       hoveredSensor.sensor.getWorldPosition(hoverPosition);
