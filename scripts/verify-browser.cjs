@@ -104,7 +104,8 @@ async function load(file, modern) {
       const isAgv=${modern}&&(()=>{for(let node=o;node;node=node.parent)if(node.userData?.role==='agv-system')return true;return false})();
       const isEnvironmentSensor=${modern}&&(()=>{for(let node=o;node;node=node.parent)if(node.userData?.role==='environment-sensors')return true;return false})();
       const isAuxiliary=${modern}&&!!o.userData?.hoverOutline;
-      if(!o.isMesh || isAgv || isEnvironmentSensor || isAuxiliary || (o.parent===parking && o.isInstancedMesh))return;
+      const isTeamArea=${modern}&&(()=>{for(let node=o;node;node=node.parent)if(node.userData?.role==='sewing-team-interaction')return true;return false})();
+      if(!o.isMesh || isAgv || isEnvironmentSensor || isAuxiliary || isTeamArea || (o.parent===parking && o.isInstancedMesh))return;
       const previousHash=hash;hash=2166136261;
       meshes++;
       vertices+=o.geometry.attributes.position.count;
@@ -169,6 +170,152 @@ async function load(file, modern) {
     await evaluate("localStorage.removeItem('tng-viet-duc-3d:toolbar-v1')");
     const current = await load("index.html", true);
     console.log("Refactored:", { ...current, parts: undefined });
+    assert.equal(await evaluate("TNG.state.sewingTeams.teams.length"), 24);
+    const teamHover = await evaluate(`(() => {
+      const f=TNG.state.f1, team=TNG.state.sewingTeams.teams[12];
+      f.scene.updateMatrixWorld(true);
+      const p=team.area.getWorldPosition(new THREE.Vector3());p.y+=0.75;p.project(f.camera);
+      const c=f.renderer.domElement,b=c.getBoundingClientRect();
+      c.dispatchEvent(new PointerEvent('pointermove',{clientX:b.left+(p.x+1)*b.width/2,clientY:b.top+(1-p.y)*b.height/2,pointerType:'mouse'}));
+      const panel=document.querySelector('.sewing-team-panel');
+      return {shown:!panel.hidden,output:panel.querySelector('.team-output').textContent};
+    })()`);
+    assert.equal(teamHover.shown, true);
+    assert.match(teamHover.output, /^\d+\/100$/);
+    const teamPoint = await evaluate(`(() => {
+      const f=TNG.state.f1, team=TNG.state.sewingTeams.teams[12];
+      const p=team.area.getWorldPosition(new THREE.Vector3());p.y+=0.75;p.project(f.camera);
+      const b=f.renderer.domElement.getBoundingClientRect();
+      return {x:b.left+(p.x+1)*b.width/2,y:b.top+(1-p.y)*b.height/2};
+    })()`);
+    await send("Input.dispatchMouseEvent", { type: "mouseMoved", ...teamPoint });
+    await send("Input.dispatchMouseEvent", {
+      type: "mousePressed", ...teamPoint, button: "left", clickCount: 1,
+    });
+    await send("Input.dispatchMouseEvent", {
+      type: "mouseReleased", ...teamPoint, button: "left", clickCount: 1,
+    });
+    const teamChecks = await evaluate(`(() => {
+      const app=TNG.state, feature=app.sewingTeams, teams=feature.teams;
+      const details=document.querySelector('.sewing-team-details');
+      const clicked={shown:!details.hidden,name:details.querySelector('h2').textContent,
+        rows:details.querySelectorAll('tbody tr').length,
+        idle:details.querySelector('.team-idle-time')?.textContent,
+        text:details.textContent,
+        scrollable:getComputedStyle(details.querySelector('.team-details-body')).overflowY};
+      feature.closeDetails();
+      feature.select(teams[0]);
+      const missingQuality=details.textContent.includes('Chưa có dữ liệu kiểm hàng');
+      feature.closeDetails();
+      const t8=teams[7],t9=teams[8];
+      return {clicked,missingQuality,
+        widths:[t8,t9].map(t=>+(t.maxX-t.minX).toFixed(3)),
+        aisle:+(t9.minX-t8.maxX).toFixed(3),
+        aligned:teams.every(t=>Math.abs(t.area.position.x-t.x)<0.001),
+        highlight:teams.every(t=>t.edge.material.color.equals(new THREE.Color(0x48ff7a))),
+        boundaries:[0.8499,0.85,0.9499,0.95,1.1].map(feature.getAchievementColor),
+        floorColors:teams.slice(0,8).map(t=>t.floor.material.color.equals(new THREE.Color(feature.getAchievementColor(t.output/t.target)))),
+        hourlyTotals:teams.every(t=>t.hourlyOutput.reduce((a,b)=>a+b,0)===t.output),
+        closed:details.hidden};
+    })()`);
+    assert.equal(teamChecks.clicked.shown, true, "Clicking a sewing team did not open details.");
+    assert.equal(teamChecks.clicked.name, "Tổ may 13");
+    assert.equal(teamChecks.clicked.rows, 4);
+    assert.match(teamChecks.clicked.idle, /phút .* giây/);
+    assert.match(teamChecks.clicked.text, /Hiệu suất lao động/);
+    assert.match(teamChecks.clicked.text, /Dự báo cuối ca/);
+    assert.equal(teamChecks.clicked.scrollable, "auto");
+    assert.equal(teamChecks.missingQuality, true);
+    assert.deepEqual(teamChecks.widths, [3.8, 3.8]);
+    assert.equal(teamChecks.aisle, 3.3);
+    assert.equal(teamChecks.aligned, true);
+    assert.equal(teamChecks.highlight, true);
+    assert.deepEqual(teamChecks.boundaries, [0xef4444, 0xfacc15, 0xfacc15, 0x22c55e, 0x22c55e]);
+    assert.equal(teamChecks.floorColors.every(Boolean), true);
+    assert.equal(teamChecks.hourlyTotals, true);
+    assert.equal(teamChecks.closed, true);
+    const balanceToggle = await evaluate(`(() => {
+      const app=TNG.state, feature=app.sewingTeams, team=feature.teams[12];
+      const button=document.getElementById('tSewingBalance');
+      const modelState=()=>{
+        const result=[];
+        app.f2.f2.traverse(object=>{
+          for(let node=object;node;node=node.parent)
+            if(node.userData.role==='sewing-team-interaction')return;
+          result.push([object.uuid,object.visible]);
+        });
+        return JSON.stringify(result);
+      };
+      const before=modelState();
+      feature.select(team);
+      button.click();
+      const f=app.f1,c=f.renderer.domElement,b=c.getBoundingClientRect();
+      const p=team.area.getWorldPosition(new THREE.Vector3());p.y+=0.75;p.project(f.camera);
+      c.dispatchEvent(new PointerEvent('pointermove',{clientX:b.left+(p.x+1)*b.width/2,clientY:b.top+(1-p.y)*b.height/2,pointerType:'mouse'}));
+      const disabled={pressed:button.getAttribute('aria-pressed'),
+        floorHidden:feature.teams.every(t=>!t.floor.visible),
+        highlightsHidden:feature.teams.every(t=>!t.edge.visible&&t.area.material.opacity===0),
+        warningsHidden:[...document.querySelectorAll('.sewing-team-warning')].every(e=>e.hidden),
+        hoverHidden:document.querySelector('.sewing-team-panel').hidden,
+        detailsKept:!document.querySelector('.sewing-team-details').hidden,
+        modelsKept:before===modelState()};
+      feature.select(team);
+      const selectableWithoutHighlight=!document.querySelector('.sewing-team-details').hidden&&!team.edge.visible;
+      button.click();
+      const restored=button.getAttribute('aria-pressed')==='true'&&feature.teams.every(t=>t.floor.visible);
+      feature.closeDetails();
+      return {disabled,selectableWithoutHighlight,restored};
+    })()`);
+    assert.deepEqual(balanceToggle.disabled, {
+      pressed: "false", floorHidden: true, highlightsHidden: true,
+      warningsHidden: true, hoverHidden: true, detailsKept: true, modelsKept: true,
+    });
+    assert.equal(balanceToggle.selectableWithoutHighlight, true);
+    assert.equal(balanceToggle.restored, true);
+    await evaluate("TNG.state.sewingTeams.select(TNG.state.sewingTeams.teams[12])");
+    await delay(100);
+    const teamScreenshot = await send("Page.captureScreenshot", { format: "png" });
+    fs.mkdirSync(path.join(root, ".tmp"), { recursive: true });
+    fs.writeFileSync(path.join(root, ".tmp", "sewing-team-details.png"),
+      Buffer.from(teamScreenshot.data, "base64"));
+    const idleBefore = await evaluate("document.querySelector('.team-idle-time').textContent");
+    let idleAfter = idleBefore;
+    for (let attempt = 0; attempt < 30 && idleAfter === idleBefore; attempt++) {
+      await delay(100);
+      idleAfter = await evaluate("document.querySelector('.team-idle-time').textContent");
+    }
+    assert.notEqual(idleAfter, idleBefore, "Time since the last product did not update.");
+    const teamWarnings = await evaluate(`(() => {
+      const app=TNG.state, f=app.f1, teams=app.sewingTeams.teams;
+      const matches=teams.every(team=>{
+        const p=new THREE.Vector3(team.x,4.9,team.headZ)
+          .applyMatrix4(team.area.parent.matrixWorld).project(f.camera);
+        const expected=team.output/team.target<0.85&&Math.abs(p.x)<=1&&Math.abs(p.y)<=1&&Math.abs(p.z)<=1;
+        return document.querySelector('.sewing-team-warning[data-team-id="'+team.id+'"]').hidden!==expected;
+      });
+      document.querySelector('.sewing-team-warning[data-team-id="1"]').click();
+      const markerSelected=document.querySelector('.sewing-team-details h2').textContent;
+      app.sewingTeams.closeDetails();
+      app.sewingTeams.select(teams[1]);
+      app.environmentSensors.select(app.environmentSensors.sensors[0]);
+      const switched=document.querySelector('.sewing-team-details').hidden;
+      app.objectInfo.close();
+      app.sewingTeams.select(teams[0]);
+      document.getElementById('mT1').click();
+      return {matches,markerSelected,switched};
+    })()`);
+    await delay(100);
+    assert.equal(teamWarnings.matches, true);
+    assert.equal(teamWarnings.markerSelected, "Tổ may 1");
+    assert.equal(teamWarnings.switched, true);
+    for (let attempt = 0; attempt < 30; attempt++) {
+      if (await evaluate("document.querySelector('.sewing-team-details').hidden && [...document.querySelectorAll('.sewing-team-warning')].every(e=>e.hidden)")) break;
+      await delay(100);
+    }
+    assert.equal(await evaluate("document.querySelector('.sewing-team-details').hidden"), true);
+    assert.equal(await evaluate("[...document.querySelectorAll('.sewing-team-warning')].every(e=>e.hidden)"), true);
+    await evaluate("document.getElementById('mBoth').click()");
+    await evaluate("TNG.state.sewingTeams.clear()");
     const agvStart = await evaluate(`({
       robots:TNG.state.agv.agents.length,
       robotVisible:TNG.state.agv.robots.visible,
@@ -327,16 +474,17 @@ async function load(file, modern) {
     await delay(2000);
     // Preferences survive a reload, then reset the headless profile to defaults.
     await evaluate(
-      "document.getElementById('mT2').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click()",
+      "document.getElementById('mT2').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click();document.getElementById('tSewingBalance').click()",
     );
     await delay(50);
+    await evaluate("window.__verificationBeforeReload = true");
     await send("Page.reload");
     // Wait for navigation to replace the old document before reading TNG again.
     await delay(1500);
     for (let i = 0; i < 80; i++) {
       if (
         await evaluate(
-          "document.readyState === 'complete' && !!window.TNG?.state?.stats2",
+          "!window.__verificationBeforeReload && document.readyState === 'complete' && !!window.TNG?.state?.stats2",
         )
       )
         break;
@@ -349,8 +497,10 @@ async function load(file, modern) {
     );
     assert.equal(await evaluate("TNG.state.agv.robotGroups.every(g=>!g.visible)"), true);
     assert.equal(await evaluate("TNG.state.agv.routeGroups.every(g=>!g.visible)"), true);
+    assert.equal(await evaluate("document.getElementById('tSewingBalance').getAttribute('aria-pressed')"), "false");
+    assert.equal(await evaluate("TNG.state.sewingTeams.teams.every(t=>!t.floor.visible)"), true);
     await evaluate(
-      "document.getElementById('mBoth').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click();document.getElementById('vPersp').click()",
+      "document.getElementById('mBoth').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click();document.getElementById('tSewingBalance').click();document.getElementById('vPersp').click()",
     );
     await delay(50);
     assert.equal(errors.length, 0, errors.join("\n"));

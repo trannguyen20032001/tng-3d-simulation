@@ -32,6 +32,7 @@
   "src/features/floor-controls.js",
   "src/features/agv.js",
   "src/features/environment-sensors.js",
+  "src/features/sewing-teams.js",
   "src/features/hover-outline.js",
   "src/features/preferences.js",
   "src/areas/floor-1/build.js",

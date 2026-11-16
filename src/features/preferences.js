@@ -7,7 +7,7 @@
     const modeIds = ["mT1", "mT2", "mBoth"];
     const toggleIds = [
       "tFlow", "tLabels", "tWalls", "tTrees", "tSpin", "tMotion",
-      "mSplit", "tCeil2", "tArea", "tAgv", "tAgvRoutes", "tEnvSensors",
+      "mSplit", "tCeil2", "tArea", "tAgv", "tAgvRoutes", "tEnvSensors", "tSewingBalance",
     ];
     const isPressed = (id) =>
       document.getElementById(id)?.getAttribute("aria-pressed") === "true";

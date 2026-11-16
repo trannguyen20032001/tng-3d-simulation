@@ -56,6 +56,7 @@ TNG.areas.buildFloor2 = function (app) {
   }
   const chairAt = TNG.components.chairAt({ box, cyl, C });
   const lineHeads = []; // [x,z,y_dwg] đầu mỗi tổ may (để treo biển)
+  const sewingZones = [];
   let nSew = 0;
   D.fur.forEach(([cx, cy, w, h, L]) => {
     const x = X(cx),
@@ -1263,6 +1264,12 @@ TNG.areas.buildFloor2 = function (app) {
         right = gi === aisleI,
         o = {};
       outline(X(g[0]) - 1.1, Z(174250), X(g[g.length - 1]) + 1.1, Z(139400), o);
+      sewingZones.push({
+        minX: X(g[0]) - 1.1,
+        maxX: X(g[g.length - 1]) + 1.1,
+        minZ: Z(174250),
+        maxZ: Z(139400),
+      });
     });
     // 2) 7 tổ chuyền treo
     for (let k = 0; k < 7; k++) {
@@ -1472,6 +1479,15 @@ TNG.areas.buildFloor2 = function (app) {
     { F1, scene, Y2, labelGroup, wallGroup, ceilGroup, X, Z, nSew, lineHeads },
     app,
   );
+
+  // Match interactive areas to the same order as the numbered sewing signs.
+  app.f2.sewingTeams = lineHeads.map(([x, z], index) => ({
+    id: index + 1,
+    name: `Tổ may ${index + 1}`,
+    x,
+    headZ: z,
+    ...sewingZones[index],
+  }));
 
   return app.f2;
 };

@@ -233,6 +233,7 @@
     };
     let selectedAgent = null;
     const showInfo = (agent) => {
+      app.sewingTeams?.closeDetails();
       selectedAgent = agent;
       app.environmentSensors?.clearSelected();
       F1.followObject(agent.robot);
@@ -540,6 +541,7 @@
     ]);
 
     app.agv = {
+      dismissHoverPanel,
       systems: [system, floor2System],
       routeGroups: [routeGroup, floor2RouteGroup],
       robotGroups: [robotGroup, floor2RobotGroup],

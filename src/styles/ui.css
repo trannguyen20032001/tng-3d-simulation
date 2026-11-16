@@ -294,6 +294,7 @@ ol.zones li button.on {
   display: none;
 }
 
+.sewing-team-panel,
 .sensor-hover-panel {
   position: absolute;
   z-index: 4;
@@ -317,6 +318,109 @@ ol.zones li button.on {
 
 .sensor-hover-panel[hidden] {
   display: none;
+}
+
+.sewing-team-panel { width: 290px; }
+.sewing-team-panel[hidden] { display: none; }
+.sewing-team-panel small { color: var(--muted); font-size: 10px; }
+.sewing-team-panel span { display: flex; justify-content: space-between; gap: 12px; }
+.sewing-team-panel .team-bottleneck { color: #e77c2c; }
+
+.object-info.sewing-team-details {
+  width: min(430px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  z-index: 10000;
+  background: var(--chip-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.sewing-team-details header {
+  flex-shrink: 0;
+}
+
+.team-details-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 14px 14px;
+}
+
+.team-achievement {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--chip-bg);
+  font: 700 25px var(--f-mono);
+}
+
+.team-achievement small,
+.sewing-team-details td small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font: 400 11px var(--f-ui);
+}
+
+.sewing-team-details dl {
+  padding: 6px 0 10px;
+}
+
+.sewing-team-details dd {
+  max-width: 58%;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.sewing-team-details h3 {
+  margin: 12px 0 8px;
+  font-size: 13px;
+}
+
+.sewing-team-details table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.sewing-team-details th,
+.sewing-team-details td {
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+
+.sewing-team-details th:first-child,
+.sewing-team-details td:first-child {
+  text-align: left;
+}
+
+.sewing-team-details .is-bottleneck {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.sewing-team-details .team-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font: 400 11px/1.6 var(--f-ui);
+  letter-spacing: normal;
+}
+
+.team-hourly {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  font-size: 11px;
+}
+
+.team-hourly span {
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--chip-bg);
+}
+
+.team-hourly b {
+  display: block;
+  margin-top: 5px;
 }
 
 .sensor-hover-name {

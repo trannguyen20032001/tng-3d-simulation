@@ -409,6 +409,7 @@
       F1.invalidate(true);
     };
     app.environmentSensors = {
+      dismissHoverPanel,
       groups: [floor1Group, floor2Group],
       sensors,
       select: showInfo,

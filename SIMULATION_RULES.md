@@ -1,9 +1,75 @@
 # Quy tắc hoạt động mô phỏng 3D
 
-Tài liệu này mô tả hành vi tương tác hiện có trong mô phỏng nhà máy 3D.
+Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ may/cân bằng chuyền và mọi thiết bị hoặc đối tượng tương tác được bổ sung sau này. Các thông số và ngoại lệ có thể được người dùng chỉnh sửa trực tiếp tại đây.
+
+**Phạm vi cập nhật:** Việc thống nhất quy tắc trong tài liệu không tự thay đổi code đang chạy. Theo yêu cầu của người dùng, code hiện tại được giữ nguyên, đặc biệt là cân bằng chuyền. Những khác biệt của cân bằng chuyền được ghi rõ trong phần hiện trạng bên dưới; không tự sửa code để áp dụng quy tắc chung nếu chưa có yêu cầu tiếp theo.
+
+## Quy tắc chung mặc định cho mọi đối tượng
+
+### 1. Highlight khi hover hoặc chọn
+
+- AGV, sensor, tổ may và thiết bị mới dùng chung màu **xanh lá cây `#48ff7a`** cho khung highlight khi hover/chọn.
+- Khung bám đúng biên và vị trí đối tượng, cập nhật theo di chuyển/biến đổi của đối tượng và tầng. Không bao gồm lối đi hay đối tượng lân cận.
+- Khung hover ẩn khi chuột rời đối tượng; khung của đối tượng đang chọn được giữ cho đến khi bỏ chọn, đóng bảng chi tiết hoặc chọn đối tượng khác.
+- Màu khung tương tác độc lập với màu trạng thái: dải sàn, vùng đo, đèn và dấu cảnh báo vẫn dùng màu theo trạng thái tương ứng.
+
+### 2. Panel hover và thời gian hiển thị
+
+- Hover vào đối tượng sẽ hiện một panel nổi phía trên đối tượng. Panel đi theo đối tượng và cập nhật vị trí theo camera, kể cả khi di chuyển hoặc tách tầng.
+- Tại một thời điểm chỉ có một panel hover cho tất cả các loại đối tượng.
+- Panel tồn tại tối đa **15 giây** kể từ lúc xuất hiện, sau đó tự ẩn. Không liên tục đặt lại thời gian chỉ vì chuột vẫn nằm trên cùng một đối tượng.
+- Rời đối tượng hoặc rời canvas không làm panel biến mất ngay; panel tiếp tục hiển thị đến hết 15 giây, trừ các trường hợp đóng sớm bên dưới. Thời gian của panel độc lập với khung highlight khi hover.
+- Hover sang đối tượng khác, kể cả khác loại: đóng panel cũ, mở panel của đối tượng mới và bắt đầu lại thời gian 15 giây.
+- Bấm chuột, cuộn chuột, thao tác bàn phím hoặc điều khiển camera: đóng panel hover đang hiện. Nếu sau đó hover vào đối tượng khác, mở panel mới theo quy tắc trên.
+- Nội dung panel gồm tên/mã đối tượng và thông số phù hợp với loại đối tượng. Không trộn thông số giữa AGV, sensor, tổ may hoặc thiết bị mới; nội dung riêng được mô tả ở các phần bên dưới.
+
+### 3. Click chọn, bảng chi tiết và camera
+
+- Click trực tiếp vào đối tượng sẽ chọn đối tượng, mở bảng thông số chi tiết ở **góc trên bên phải**, đồng thời đưa camera đến và bám theo đối tượng.
+- Đối tượng di chuyển thì camera đi theo; đối tượng cố định thì camera giữ điểm quan sát tại đối tượng đó. Vị trí bám cập nhật khi tầng chứa đối tượng di chuyển hoặc tách tầng.
+- Tại một thời điểm chỉ có một đối tượng được chọn và một bảng chi tiết. Chọn đối tượng mới, kể cả khác loại, sẽ thay nội dung bảng và chuyển camera sang bám đối tượng mới.
+- Click chọn cũng đóng panel hover đang hiện. Bảng chi tiết không tự ẩn sau 15 giây; thời hạn này chỉ áp dụng cho panel hover.
+- Đóng bảng chi tiết hoặc bỏ chọn sẽ bỏ khung chọn và dừng camera bám theo. Chọn góc nhìn có sẵn cũng dừng việc bám theo.
+
+### 4. Cảnh báo và dấu chấm than
+
+- Đối tượng gặp lỗi hoặc đạt điều kiện cảnh báo nghiêm trọng của loại đó sẽ có dấu **chấm than đỏ nhấp nháy** phía trên. Dấu cảnh báo bám theo vị trí đối tượng và camera.
+- Click dấu chấm than có cùng hành vi với click trực tiếp đối tượng: chọn, mở bảng chi tiết, đưa camera đến và bám theo đối tượng bị cảnh báo.
+- Điều kiện phát sinh và hết cảnh báo được cấu hình riêng theo loại đối tượng; không dùng chung một ngưỡng nghiệp vụ cho tất cả thiết bị.
+- Khi hết điều kiện cảnh báo, ẩn dấu chấm than tương ứng.
+
+### 5. Ẩn/hiện theo tầng và chức năng
+
+- Khi đối tượng hoặc tầng chứa đối tượng bị ẩn, panel hover, khung highlight và dấu cảnh báo liên quan cũng ẩn. Nếu đối tượng đó đang được chọn, đóng bảng chi tiết và dừng camera bám theo.
+- Nút toolbar chỉ điều khiển đúng phạm vi chức năng được mô tả, không làm ẩn các đối tượng không liên quan.
+- Với lớp thông tin như cân bằng chuyền, tắt lớp chỉ ẩn các hiệu ứng/thông tin của lớp theo cấu hình, giữ nguyên máy móc, bàn ghế và công nhân. Chi tiết ngoại lệ hiện tại của nút này được ghi ở phần cân bằng chuyền.
+
+### 6. Áp dụng cho thiết bị mới và chỉnh sửa sau này
+
+- Khi bổ sung loại thiết bị hoặc đối tượng tương tác mới, mặc định áp dụng toàn bộ quy tắc chung trên, bao gồm **panel hover 15 giây** và **click để camera đến, bám theo đối tượng**.
+- Mỗi loại bổ sung riêng các thông số hover/chi tiết, điều kiện cảnh báo, màu trạng thái và phạm vi hiển thị phù hợp nghiệp vụ.
+- Nếu cần hành vi khác, ghi ngoại lệ rõ ràng cho loại đối tượng đó trong tài liệu này. Quy tắc riêng có ghi rõ ngoại lệ được ưu tiên; các hành vi còn lại tiếp tục theo quy tắc chung.
+- Không coi khác biệt trong code cân bằng chuyền hiện tại là mặc định cho thiết bị mới. Không tự sửa code hiện tại chỉ để đồng bộ với lần cập nhật tài liệu này.
+
+## Cân bằng chuyền của 24 tổ may — hiện trạng giữ nguyên
+
+**Ngoại lệ triển khai hiện tại:** Panel hover của tổ may đóng khi rời vùng hoặc tương tác, chưa áp dụng thời hạn 15 giây của quy tắc chung. Click trực tiếp tổ may mở chi tiết nhưng không tự đưa camera đến; click dấu chấm than mới đưa camera đến và bám theo tổ. Các hành vi này cùng nút bật/tắt lớp cân bằng chuyền được giữ nguyên trong code theo yêu cầu của người dùng. Đây là ghi chú hiện trạng, không phải quy tắc mặc định cho thiết bị bổ sung sau này.
+
+- Nút **Cân bằng chuyền** trên toolbar bật/tắt lớp cân bằng chuyền, mặc định bật và lưu trạng thái khi tải lại trang. Khi tắt: ẩn dấu chấm than của tổ may, ẩn màu sản lượng trên sàn để trả lại sàn gốc, không hiện highlight hoặc panel khi hover tổ may. Máy móc, bàn ghế, công nhân và các đối tượng trong tổ vẫn hiển thị; click tổ vẫn mở bảng chi tiết. Bật lại khôi phục màu sàn và cảnh báo theo dữ liệu hiện tại. AGV và cảm biến giữ nguyên hành vi.
+- Hover vào vùng một tổ may ở tầng 2 sẽ tô sáng và viền xanh lá cây của tổ đó.
+- Vùng tương tác khớp với vạch sàn của từng tổ, không lấy trung điểm giữa hai tổ để tránh tràn vào lối đi (đặc biệt tổ 8–9).
+- Panel nổi hiển thị tên tổ, sản lượng/mục tiêu và công đoạn có sản lượng thấp nhất.
+- Panel hover đóng khi rời tổ, tương tác camera hoặc ẩn tầng 2. Tổ đang chọn giữ viền đến khi đóng bảng chi tiết hoặc chọn đối tượng khác.
+- Click vào tổ mở bảng chi tiết ở góc trên bên phải; chọn tổ khác thay nội dung bảng. Đóng bằng nút × hoặc Escape. Chọn AGV/cảm biến đóng bảng tổ may; chọn tổ may đóng popup AGV/cảm biến. Ẩn tầng 2 đóng bảng chi tiết.
+- Bảng chi tiết gồm: sản lượng lũy kế/mục tiêu hiện tại; sản lượng từng công đoạn có mã thiết bị và kế hoạch; công đoạn nghẽn (sản lượng thấp nhất); chênh lệch công đoạn này trừ công đoạn liền trước; thời gian từ sản phẩm cuối và trạng thái chạy/dừng; mục tiêu, thực tế, tỷ lệ hoàn thành, hiệu suất; mã hàng, số lao động, sản lượng theo giờ, nhịp thực tế/yêu cầu, dự báo cuối ca; tỷ lệ lỗi khi có dữ liệu kiểm hàng. Thiếu dữ liệu kiểm hàng phải ghi rõ, không coi là 0% lỗi.
+- Tỷ lệ đạt = sản lượng thực tế / mục tiêu hiện tại. Dải sàn xanh khi **≥95%**, vàng khi **≥85% và <95%**, đỏ khi **<85%**. Đúng 85% là vàng, đúng 95% là xanh.
+- Tổ đạt dưới 85% có dấu chấm than đỏ nhấp nháy phía trên; bấm dấu này mở chi tiết và đưa camera đến tổ. Cảnh báo ẩn khi tầng 2 bị ẩn hoặc tổ đạt từ 85%.
+- Sản lượng và các công đoạn hiện là dữ liệu mô phỏng, cấu hình tại `src/features/sewing-teams.js`. Ví dụ hiện tại là ảnh chụp dữ liệu sau 4 giờ trong ca 8 giờ, ngưỡng dừng suy ra từ 120 giây không có sản phẩm mới. Thời gian từ sản phẩm cuối tăng theo đồng hồ; dữ liệu sản xuất chưa kết nối máy thực.
+- Hiệu suất lao động = sản lượng × thời gian lao động chuẩn mỗi sản phẩm / (số lao động × thời gian đã làm). Nhịp thực tế/yêu cầu = thời gian đã làm / sản lượng thực tế hoặc mục tiêu hiện tại. Dự báo cuối ca = tốc độ sản xuất hiện tại × thời lượng ca. Tổng sản lượng theo giờ bằng sản lượng lũy kế.
 
 ## Camera và đối tượng được chọn
 
+- Quy chuẩn mặc định cho mọi loại đối tượng nằm ở mục **Quy tắc chung mặc định cho mọi đối tượng**. Các dòng dưới đây mô tả hiện trạng AGV và cảm biến; ngoại lệ cân bằng chuyền được ghi riêng ở phần trên.
 - Khi chọn một AGV, camera di chuyển đến vị trí AGV và bám theo xe khi xe di chuyển.
 - Khi chọn một cảm biến môi trường, camera di chuyển đến vị trí cảm biến và bám theo cảm biến đó.
 - Đóng popup thông tin sẽ dừng việc bám theo đối tượng.
