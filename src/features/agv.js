@@ -316,6 +316,7 @@
       return true;
     };
     const setHoveredAgent = (agent) => {
+      if (!agent) pointerTarget = null;
       if (!agent && !hoveredAgent) return;
       clearTimeout(hoverTimeout);
       hoverTimeout = null;
@@ -402,7 +403,7 @@
         -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
       );
       const target = findPointerTarget();
-      if (target === pointerTarget) return;
+      if (target === pointerTarget && hoveredAgent) return;
       pointerTarget = target;
       if (target?.robot) setHoveredAgent(target);
       else if (target) setHoveredAgent(null);

@@ -223,6 +223,7 @@
       return true;
     };
     const setHoveredSensor = (data) => {
+      if (!data) pointerTarget = null;
       if (!data && !hoveredSensor) return;
       clearTimeout(hoverTimeout);
       hoverTimeout = null;
@@ -303,7 +304,7 @@
         -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
       );
       const target = findPointerTarget();
-      if (target === pointerTarget) return;
+      if (target === pointerTarget && hoveredSensor) return;
       pointerTarget = target;
       if (target?.sensor) setHoveredSensor(target);
       else if (target) setHoveredSensor(null);
