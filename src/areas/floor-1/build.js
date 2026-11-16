@@ -2980,6 +2980,21 @@ TNG.areas.buildFloor1 = function (app) {
     skyDome,
     ground,
     flyTo,
+    slideshowAreas: [
+      { name: "Phòng sấy 1", pos: [98400, 84700], description: "Phòng sấy kính lớn thứ nhất" },
+      { name: "Phòng sấy 2", pos: [110800, 84700], description: "Phòng sấy kính lớn thứ hai" },
+      { name: "Máy dò kim", pos: [86100, 79700], description: "Dây chuyền kiểm tra kim loại" },
+      ...EXTRA.map((area) => ({
+        ...area,
+        description: `Vị trí ${area.name.toLowerCase()} trên mặt bằng tầng 1`,
+      })),
+    ].map((area, index) => ({
+      id: `floor1-detail-${index + 1}`,
+      name: area.name,
+      description: area.description,
+      position: new THREE.Vector3(X(area.pos[0]), 1, Z(area.pos[1])),
+    })),
+    get isFlying() { return fly !== null; },
     followObject,
     stopFollowing,
     setView,

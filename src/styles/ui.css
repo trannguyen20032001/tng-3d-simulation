@@ -520,6 +520,20 @@ ol.zones li button.on {
   overflow: hidden
 }
 
+.object-info.slideshow-area-details {
+  width: min(340px, calc(100vw - 32px));
+  z-index: 10000;
+  background: var(--chip-bg);
+}
+
+.slideshow-area-details dt {
+  flex-shrink: 0;
+}
+
+.slideshow-area-details dd {
+  overflow-wrap: anywhere;
+}
+
 .object-info[hidden] {
   display: none
 }

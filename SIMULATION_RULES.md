@@ -185,6 +185,38 @@ Mỗi cảm biến có một đèn tín hiệu nhấp nháy ở phía trên thâ
 
 ## Điều khiển hiển thị
 
+### Slideshow tự động
+
+- Với tổ may, camera focus tại đầu tổ, đúng tâm bảng tên (tọa độ tầng 2:
+  `x = team.x`, `y = 4.3`, `z = team.headZ - 1`), rồi zoom và xoay quanh điểm này.
+  Điểm focus đi theo tầng khi tách tầng; highlight vẫn bao quanh vùng tổ may.
+- Ngoài các khu tổng thể trong danh sách bên trái, slideshow còn đến riêng từng
+  phòng sấy, máy dò kim, phòng bắn mác, LAB, mac, seam, cắt chun, bảo quản lông vũ,
+  kiểm hàng, khách hàng, bảo quản in thêu, phòng điện, cắt vòng, ép mex, cộp nhiệt,
+  máy cắt tự động, bàn sang dấu, bàn kiểm bán, nén khí, bốc công và các vị trí phụ
+  đã đánh dấu trên mặt bằng tầng 1. Danh sách chi tiết dùng `f1.slideshowAreas`,
+  lấy tọa độ từ danh sách `EXTRA` và cấu hình phòng sấy/máy dò kim trong file dựng tầng 1.
+- Nút **Slideshow** trên toolbar bật/tắt chế độ xem tự động, mặc định tắt.
+- Mỗi đối tượng được xem theo thời lượng cấu hình `durationMs` trong
+  `src/features/slideshow.js` (hiện là **10 giây**), đồng thời mở popup chi tiết của đối tượng.
+  Camera bám theo AGV đang di chuyển. Khu vực dùng góc nhìn có sẵn và hiển thị tên,
+  tầng, mô tả; không tự tạo thêm dữ liệu vận hành chưa có.
+- Chờ camera hoàn tất focus, zoom nhẹ gần hơn 12% trong 0,9 giây, sau đó xoay chậm
+  quanh đối tượng. Khung xanh lá nhấp nháy bám theo AGV/sensor/tổ may; với khu vực,
+  đánh dấu vùng quanh tâm quan sát. Chuyển mục hoặc dừng thì xóa highlight cũ.
+  Cấu hình bằng `zoomScale`, `zoomDurationMs`, `orbitRadiansPerSecond` trong cùng file.
+- Mỗi vòng đi qua AGV, sensor, 24 tổ may và các khu vực trong danh sách nhà máy.
+  Thứ tự: cảnh báo đỏ/dấu chấm than → cảnh báo vàng → các đối tượng còn lại.
+  Sensor dùng trạng thái đo hiện tại; AGV lỗi ưu tiên đỏ, pin yếu ưu tiên vàng;
+  tổ may dưới 85% ưu tiên đỏ, từ 85% đến dưới 95% ưu tiên vàng.
+- Hết danh sách thì đọc lại trạng thái, sắp xếp lại ưu tiên và bắt đầu vòng mới.
+- Tự chuyển tầng phù hợp, bật các lớp AGV/sensor/cân bằng chuyền, tắt tự xoay
+  và trần tầng 2 để quan sát nội thất.
+- Bấm lại nút, thao tác camera, chọn thủ công từ toolbar/danh sách khu vực,
+  đóng popup hoặc nhấn Escape sẽ dừng slideshow. Giữ góc nhìn hiện tại khi dừng.
+- Khi tab bị ẩn, tạm dừng bộ đếm; khi quay lại, đối tượng hiện tại được xem lại
+  đủ 30 giây. Không tự bật slideshow khi tải lại trang.
+
 - Có thể ẩn hoặc hiện AGV, tuyến AGV và cảm biến từ thanh công cụ.
 - Có thể chuyển giữa tầng 1, tầng 2, xem cả hai tầng và tách tầng.
 - Có thể thay đổi góc nhìn, ẩn hoặc hiện nhãn, tường, cây, luồng hàng và bật tự xoay camera.

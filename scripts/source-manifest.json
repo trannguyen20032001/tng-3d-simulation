@@ -37,6 +37,7 @@
   "src/features/sewing-teams.js",
   "src/features/hover-outline.js",
   "src/features/preferences.js",
+  "src/features/slideshow.js",
   "src/areas/floor-1/build.js",
   "src/areas/floor-2/build.js",
   "src/main.js"

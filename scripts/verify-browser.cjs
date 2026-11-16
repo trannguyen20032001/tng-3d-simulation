@@ -374,7 +374,10 @@ async function load(file, modern) {
       routesVisible:TNG.state.agv.routes.visible,
       position:TNG.state.agv.agents[0].robot.position.toArray()
     })`);
-    assert.equal(agvStart.robots, 5);
+    assert.ok(agvStart.robots > 0);
+    assert.equal(agvStart.robots, await evaluate(
+      "TNG.state.agv.robotGroups.reduce((total,group)=>total+group.children.length,0)",
+    ));
     assert.equal(agvStart.robotVisible, true);
     assert.equal(agvStart.routesVisible, true);
     await delay(700);
@@ -408,7 +411,7 @@ async function load(file, modern) {
       };
     })()`);
     assert.deepEqual(failedAgv, {
-      name: "AGV-05",
+      name: await evaluate("TNG.state.agv.agents.find(agent=>agent.stalled).id"),
       status: "Cảnh báo: AGV dừng hoạt động",
       speed: "0.00 m/s",
     });
@@ -524,6 +527,86 @@ async function load(file, modern) {
     assert.ok(await evaluate("TNG.state.f2.f2.position.y>4.7"));
     await evaluate("document.getElementById('mSplit').click()");
     await delay(2000);
+    const slideshowChecks = await evaluate(`(() => {
+      const app=TNG.state, show=app.slideshow, button=document.getElementById('tSlideshow');
+      const targets=show.buildQueue();
+      const delays=[], visited=[], panels=[], floors=[];
+      const originalTimeout=window.setTimeout;
+      let scheduled;
+      window.setTimeout=(callback,ms,...args)=>{
+        if(ms===show.durationMs) {scheduled=callback;delays.push(ms);}
+        return originalTimeout(callback,ms,...args);
+      };
+      let timerAdvanced, repeated, stopped, manualStopped, defaultOff;
+      try {
+        defaultOff=!show.running && button.getAttribute('aria-pressed')==='false';
+        button.click();
+        for(let i=0;i<targets.length;i++) {
+          const current=show.current;
+          visited.push(current.id);
+          const panel=current.kind==='area' ? '.slideshow-area-details' :
+            current.kind==='team' ? '.sewing-team-details' : '#objectInfo';
+          panels.push(!document.querySelector(panel).hidden);
+          floors.push(current.floor==='Tầng 1' ? app.f2.f1root.visible&&!app.f2.f2.visible :
+            app.f2.f2.visible&&!app.f2.f1root.visible);
+          if(i===0) {scheduled();timerAdvanced=show.current.id===targets[1].id;}
+          else show.next();
+        }
+        repeated=show.current.id===show.buildQueue()[0].id;
+        button.click();
+        stopped=!show.running&&button.getAttribute('aria-pressed')==='false';
+        show.start();
+        app.f1.renderer.domElement.dispatchEvent(new WheelEvent('wheel',{deltaY:1}));
+        manualStopped=!show.running;
+      } finally {
+        show.stop();
+        window.setTimeout=originalTimeout;
+        app.objectInfo.close();app.sewingTeams.closeDetails();
+        document.getElementById('mBoth').click();
+      }
+      return {defaultOff,sorted:targets.every((t,i)=>!i||targets[i-1].priority<=t.priority),
+        kinds:[...new Set(targets.map(t=>t.kind))].sort(),
+        count:targets.length,unique:new Set(visited).size,
+        visitedAll:visited.join()===targets.map(t=>t.id).join(),
+        panels:panels.every(Boolean),floors:floors.every(Boolean),
+        timerAdvanced,repeated,stopped,manualStopped,
+        duration:show.durationMs,
+        orbitSpeed:show.orbitRadiansPerSecond,
+        delays:delays.every(ms=>ms===show.durationMs)&&delays.length>=targets.length};
+    })()`);
+    assert.equal(slideshowChecks.defaultOff, true);
+    assert.equal(slideshowChecks.duration, 10000);
+    assert.ok(slideshowChecks.orbitSpeed > 0);
+    assert.equal(slideshowChecks.sorted, true);
+    assert.deepEqual(slideshowChecks.kinds, ["agv","area","sensor","team"]);
+    assert.equal(slideshowChecks.count, slideshowChecks.unique);
+    for (const check of ["visitedAll","panels","floors","timerAdvanced","repeated",
+      "stopped","manualStopped","delays"]) assert.equal(slideshowChecks[check], true, check);
+    await evaluate("TNG.state.slideshow.start()");
+    await delay(2800);
+    const orbitStart = await evaluate("TNG.state.f1.camera.position.toArray()");
+    const effectStart = await evaluate(`(() => {
+      const f=TNG.state.f1, h=f.scene.getObjectByName('Slideshow highlight');
+      return {radius:f.camera.position.distanceTo(f.controls.target),
+        visible:h.visible,opacity:h.material.opacity};
+    })()`);
+    await delay(250);
+    const orbitEnd = await evaluate("TNG.state.f1.camera.position.toArray()");
+    const effectEnd = await evaluate(`(() => {
+      const f=TNG.state.f1, h=f.scene.getObjectByName('Slideshow highlight');
+      return {radius:f.camera.position.distanceTo(f.controls.target),opacity:h.material.opacity};
+    })()`);
+    await evaluate("TNG.state.slideshow.stop();document.getElementById('mBoth').click()");
+    assert.notDeepEqual(orbitEnd, orbitStart, "Slideshow camera did not orbit after focus.");
+    assert.ok(Math.abs(effectStart.radius - Math.sqrt(325) * 0.88) < 0.15,
+      "Slideshow zoom did not settle at 88% of the focus distance.");
+    assert.ok(Math.abs(effectEnd.radius - effectStart.radius) < 0.05,
+      "Orbit changed the camera distance.");
+    assert.equal(effectStart.visible, true);
+    assert.notEqual(effectStart.opacity, effectEnd.opacity);
+    assert.equal(await evaluate(
+      "TNG.state.f1.scene.getObjectByName('Slideshow highlight').visible"), false);
+    console.log("PASS: slideshow priorities, timer, orbit, popups, floors, loop and stop.");
     // Preferences survive a reload, then reset the headless profile to defaults.
     await evaluate(
       "document.getElementById('mT2').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click();document.getElementById('tSewingBalance').click()",

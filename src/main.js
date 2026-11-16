@@ -11,4 +11,5 @@
   TNG.state.environmentSensors.sensors.forEach((sensor) => hoverOutline.register(sensor.sensor));
   TNG.state.hoverOutline = hoverOutline;
   TNG.features.restorePreferences();
+  TNG.features.setupSlideshow(TNG.state);
 })();
