@@ -609,6 +609,7 @@ TNG.areas.buildFloor1 = function (app) {
   let frameId = 0,
     lastFrame = 0,
     motionEnabled = false,
+    highQuality = false,
     ledTexture = null;
   let labelsDirty = true,
     flowDirty = true;
@@ -628,7 +629,7 @@ TNG.areas.buildFloor1 = function (app) {
     antialias: true,
     preserveDrawingBuffer: false,
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+  renderer.setPixelRatio(1);
   renderer.setSize(stage.clientWidth, stage.clientHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -699,7 +700,7 @@ TNG.areas.buildFloor1 = function (app) {
   const sun = new THREE.DirectionalLight(0xfff6e8, 1.05);
   sun.position.set(-60, 120, 80);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(1024, 1024);
   Object.assign(sun.shadow.camera, {
     left: -135,
     right: 135,
@@ -2852,12 +2853,13 @@ TNG.areas.buildFloor1 = function (app) {
   function tick(now) {
     frameId = 0;
     if (document.hidden) return;
-    // Cap moving views at 30 fps, including on high-refresh-rate displays.
-    if (lastFrame && now - lastFrame < 1000 / 30 - 1) {
+    // Limit moving views on integrated GPUs, including high-refresh-rate displays.
+    const frameRate = highQuality ? 30 : 20;
+    if (lastFrame && now - lastFrame < 1000 / frameRate - 1) {
       frameId = requestAnimationFrame(tick);
       return;
     }
-    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 1 / 30;
+    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.1) : 1 / frameRate;
     lastFrame = now;
     const cpuStart = performance.now();
     let animating = false;
@@ -2967,6 +2969,29 @@ TNG.areas.buildFloor1 = function (app) {
     setPressed("tMotion", motionEnabled);
     invalidate();
   };
+  const updatePointLights = () => {
+    scene.traverse((object) => {
+      if (object.isPointLight) object.visible = highQuality;
+    });
+  };
+  const qualityButton = document.createElement("button");
+  qualityButton.id = "tQuality";
+  qualityButton.textContent = "Chất lượng cao";
+  qualityButton.title = "Bật 30 FPS, độ phân giải cao và bóng đổ sắc nét";
+  qualityButton.setAttribute("aria-pressed", "false");
+  document.querySelector(".toolbar").appendChild(qualityButton);
+  qualityButton.onclick = () => {
+    highQuality = !highQuality;
+    setPressed("tQuality", highQuality);
+    renderer.setPixelRatio(highQuality ? Math.min(window.devicePixelRatio || 1, 1.25) : 1);
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+    sun.shadow.map?.dispose();
+    sun.shadow.map = null;
+    sun.shadow.mapSize.setScalar(highQuality ? 2048 : 1024);
+    lastFrame = 0;
+    updatePointLights();
+    invalidate(true);
+  };
   document.getElementById("loading").hidden = true;
   app.f1 = {
     scene,
@@ -3009,6 +3034,7 @@ TNG.areas.buildFloor1 = function (app) {
     FLOW_SEGMENTS,
     FLOW_RADIAL,
     invalidate,
+    updatePointLights,
     frameHooks,
     labelRenderers,
     overlayRenderers,

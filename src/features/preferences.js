@@ -13,7 +13,7 @@
     const panelElement = (panel) => panel.id ? document.getElementById(panel.id) :
       document.querySelector(panel.selector);
     const toggleIds = [
-      "tFlow", "tLabels", "tWalls", "tTrees", "tSpin", "tMotion",
+      "tFlow", "tLabels", "tWalls", "tTrees", "tSpin", "tMotion", "tQuality",
       "mSplit", "tCeil2", "tArea", "tAgv", "tAgvRoutes", "tEnvSensors", "tSewingBalance",
     ];
     const isPressed = (id) =>

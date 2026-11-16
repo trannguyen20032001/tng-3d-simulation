@@ -5,6 +5,7 @@
   TNG.state.interaction = TNG.core.createInteractionManager(TNG.state);
   TNG.features.setupAgv(TNG.state);
   TNG.features.setupEnvironmentSensors(TNG.state);
+  TNG.state.f1.updatePointLights();
   TNG.features.setupSewingTeams(TNG.state);
   const hoverOutline = TNG.features.createHoverOutline(TNG.state.f1);
   TNG.state.agv.agents.forEach((agent) => hoverOutline.register(agent.robot));
@@ -20,7 +21,7 @@
     ["Góc nhìn", ["vExt", "vPersp", "vTop"]],
     ["Tầng", ["mT1", "mT2", "mBoth"]],
     ["Kết cấu tầng", ["mSplit", "tCeil2"]],
-    ["Trình chiếu", ["tSlideshow", "tSpin", "tMotion"]],
+    ["Trình chiếu", ["tSlideshow", "tSpin", "tMotion", "tQuality"]],
     ["Hiển thị", ["tLabels", "tFlow", "tWalls", "tTrees", "tArea", "tAgv",
       "tAgvRoutes", "tEnvSensors", "tSewingBalance"]],
   ];

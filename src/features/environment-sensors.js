@@ -358,8 +358,13 @@
         hoverTemperature.textContent = `${hoveredSensor.currentTemperature.toFixed(1)} °C`;
         hoverHumidity.textContent = `${Math.round(hoveredSensor.currentHumidity)}%`;
       }
-      return sensors.some((data) => visibleInScene(data.sensor));
+      return false;
     });
+    window.setInterval(() => {
+      if (!document.hidden && sensors.some((data) => visibleInScene(data.sensor))) {
+        F1.invalidate();
+      }
+    }, 1000);
     const button = document.createElement("button");
     button.id = "tEnvSensors";
     button.textContent = "Cảm biến";
