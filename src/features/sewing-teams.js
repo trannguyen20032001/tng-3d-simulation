@@ -16,8 +16,24 @@
       return 0xef4444;
     };
     // Demo snapshot: replace these production values when telemetry is available.
+    const demoOutputs = app.f2.sewingTeams.map((_, index) => 95 + index % 8);
+    const assignSeparatedPair = (outputs) => {
+      const pairs = [];
+      for (let first = 0; first < demoOutputs.length; first++) {
+        for (let second = first + 8; second < demoOutputs.length; second++) {
+          if (demoOutputs[first] >= 95 && demoOutputs[second] >= 95) {
+            pairs.push([first, second]);
+          }
+        }
+      }
+      const pair = pairs[Math.floor(Math.random() * pairs.length)];
+      pair.forEach((index, position) => { demoOutputs[index] = outputs[position]; });
+    };
+    // Each pair has at least seven intervening teams; assignments refresh on page load.
+    assignSeparatedPair([78, 84]);
+    assignSeparatedPair([85, 90]);
     const teams = app.f2.sewingTeams.map((team, index) => {
-      const output = [30, 84, 85, 90, 94, 95, 102, 78][index % 8];
+      const output = demoOutputs[index];
       const target = 100;
       const operations = ["May vai", "Tra tay", "May sườn", "Lên lai"].map((name, step) => ({
         name,
