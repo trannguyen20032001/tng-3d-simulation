@@ -133,10 +133,12 @@ TNG.features.setupFloors = function (
     // nhãn CSS không tự ẩn theo nhóm cha → tắt từng nhãn theo tầng đang hiện (ẩn tầng nào thì ẩn nhãn tầng đó)
     const on1 = lblOn && f1root.visible,
       on2 = lblOn && f2.visible;
-    const state = [on1, on2].join();
+    // CSS2D labels have no depth test, so hide lower interior labels under the slab.
+    const lowerLabelsExposed = !f2.visible || liftNow > 1;
+    const state = [on1, on2, lowerLabelsExposed].join();
     if (state !== labelState) {
       F1.labelGroup.children.forEach((c) => {
-        c.visible = on1;
+        c.visible = on1 && (lowerLabelsExposed || !c.userData.interiorLabel);
       });
       labelGroup.children.forEach((c) => {
         c.visible = on2;

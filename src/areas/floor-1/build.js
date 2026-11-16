@@ -2613,6 +2613,7 @@ TNG.areas.buildFloor1 = function (app) {
     el.className = "lbl" + (cls ? " " + cls : "");
     el.innerHTML = html;
     const o = new THREE.CSS2DObject(el);
+    o.userData.interiorLabel = x >= BX0 && x <= BX1 && y >= BY0 && y <= BY1;
     o.position.set(X(x), h, Z(y));
     labelGroup.add(o);
     return o;
@@ -2622,7 +2623,7 @@ TNG.areas.buildFloor1 = function (app) {
       `<span class="num" style="background:${z.col}">${z.n}</span>${z.name}`,
       z.lab[0],
       z.lab[1],
-      9.5,
+      3.7,
     ),
   );
   EXTRA.forEach((e) => label(e.name, e.pos[0], e.pos[1], 3.5, "small"));

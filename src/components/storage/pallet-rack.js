@@ -21,8 +21,9 @@
       const S = (su, sv) => (alongX ? [su, sv] : [sv, su]);
       const bays = Math.max(1, Math.round(L / 2.75)),
         bw = L / bays;
-      const levels = [0.12, 1.45, 2.8, 4.15],
-        H = 5.2;
+      // The upper slab starts at 4.3 m; leave clearance for the frame and goods.
+      const levels = [0.12, 1.08, 2.04, 3],
+        H = 4.2;
       for (let i = 0; i <= bays; i++) {
         for (const v of [0.04, D - 0.04]) {
           const [px, pz] = P(i * bw, v);

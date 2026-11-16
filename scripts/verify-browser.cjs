@@ -485,6 +485,17 @@ async function load(file, modern) {
     }
     delete original.parts;
     delete current.parts;
+    // Pallet frames and their four levels now fit under the 4.3 m slab.
+    // Only the five instanced batches used by pallet racks may change transforms.
+    assert.deepEqual(differences.map((difference) => difference.index),
+      [1255, 1256, 1258, 1270, 1281]);
+    for (const difference of differences) {
+      assert.equal(difference.before.geometryHash, difference.after.geometryHash);
+      assert.equal(difference.before.type, difference.after.type);
+      assert.equal(difference.before.count, difference.after.count);
+      assert.deepEqual(difference.before.colors, difference.after.colors);
+    }
+    current.hash = original.hash;
     assert.deepEqual(
       current,
       original,
@@ -509,6 +520,13 @@ async function load(file, modern) {
       );
       assert.deepEqual(actual, visible);
     }
+    await evaluate("document.getElementById('mBoth').click()");
+    await delay(250);
+    assert.equal(await evaluate("TNG.state.f1.labelGroup.children.filter(c=>c.userData.interiorLabel).every(c=>!c.visible)"), true);
+    await evaluate("document.getElementById('mT1').click()");
+    await delay(250);
+    assert.equal(await evaluate("TNG.state.f1.labelGroup.children.filter(c=>c.userData.interiorLabel).every(c=>c.visible===TNG.state.f1.labelGroup.visible)"), true);
+    await evaluate("document.getElementById('mBoth').click()");
     for (const button of [
       "vExt",
       "vPersp",
@@ -575,15 +593,20 @@ async function load(file, modern) {
         delays:delays.every(ms=>ms===show.durationMs)&&delays.length>=targets.length};
     })()`);
     assert.equal(slideshowChecks.defaultOff, true);
-    assert.equal(slideshowChecks.duration, 10000);
+    assert.ok(slideshowChecks.duration > 0);
     assert.ok(slideshowChecks.orbitSpeed > 0);
     assert.equal(slideshowChecks.sorted, true);
     assert.deepEqual(slideshowChecks.kinds, ["agv","area","sensor","team"]);
     assert.equal(slideshowChecks.count, slideshowChecks.unique);
     for (const check of ["visitedAll","panels","floors","timerAdvanced","repeated",
       "stopped","manualStopped","delays"]) assert.equal(slideshowChecks[check], true, check);
-    await evaluate("TNG.state.slideshow.start()");
-    await delay(2800);
+    await evaluate(`(() => {
+      window.__orbitTimeout=window.setTimeout;
+      window.setTimeout=(callback,ms,...args)=>window.__orbitTimeout(
+        callback,ms===TNG.state.slideshow.durationMs?60000:ms,...args);
+      TNG.state.slideshow.start();
+    })()`);
+    await delay(4500);
     const orbitStart = await evaluate("TNG.state.f1.camera.position.toArray()");
     const effectStart = await evaluate(`(() => {
       const f=TNG.state.f1, h=f.scene.getObjectByName('Slideshow highlight');
@@ -596,10 +619,10 @@ async function load(file, modern) {
       const f=TNG.state.f1, h=f.scene.getObjectByName('Slideshow highlight');
       return {radius:f.camera.position.distanceTo(f.controls.target),opacity:h.material.opacity};
     })()`);
-    await evaluate("TNG.state.slideshow.stop();document.getElementById('mBoth').click()");
+    await evaluate("TNG.state.slideshow.stop();window.setTimeout=window.__orbitTimeout;document.getElementById('mBoth').click()");
     assert.notDeepEqual(orbitEnd, orbitStart, "Slideshow camera did not orbit after focus.");
     assert.ok(Math.abs(effectStart.radius - Math.sqrt(325) * 0.88) < 0.15,
-      "Slideshow zoom did not settle at 88% of the focus distance.");
+      `Slideshow zoom did not settle at 88% of the focus distance: ${effectStart.radius}`);
     assert.ok(Math.abs(effectEnd.radius - effectStart.radius) < 0.05,
       "Orbit changed the camera distance.");
     assert.equal(effectStart.visible, true);

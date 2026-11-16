@@ -185,6 +185,10 @@ Mỗi cảm biến có một đèn tín hiệu nhấp nháy ở phía trên thâ
 
 ## Điều khiển hiển thị
 
+- Kệ pallet tầng 1 và hàng hóa phải nằm dưới mặt dưới sàn tầng 2 (cao độ 4,3 m).
+  Đỉnh kệ hiện tại là 4,2 m. Nhãn nội thất tầng 1 ẩn khi hai tầng chồng nhau để
+  không vẽ xuyên sàn; hiện lại khi chỉ xem tầng 1 hoặc tách tầng đủ khoảng hở.
+
 ### Slideshow tự động
 
 - Với tổ may, camera focus tại đầu tổ, đúng tâm bảng tên (tọa độ tầng 2:
