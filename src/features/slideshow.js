@@ -225,7 +225,8 @@
     document.addEventListener(
       "click",
       (event) => {
-        if (event.target.closest("button") === button) return;
+        if (event.target.closest("button") === button ||
+          event.target.closest("#toggleToolbar")) return;
         if (
           event.target.closest(".toolbar, ol.zones, .object-info header button")
         ) {

@@ -1,4 +1,4 @@
-/* Layout: full-bleed 3D canvas; floating legend panel top-left, view toolbar bottom-center */
+/* Layout: full-bleed 3D canvas; legend top-left, collapsible controls bottom-left */
 :root {
   --bg: #e9edf1;
   --panel: rgba(255, 255, 255, .92);
@@ -75,12 +75,13 @@ body {
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
   z-index: 5;
-  max-height: calc(100% - 110px);
+  max-height: calc(100dvh - var(--toolbar-height, 55px) - 42px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column
 }
 
 .panel header {
+  flex-shrink: 0;
   padding: 14px 16px 10px;
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -128,6 +129,8 @@ body {
 }
 
 ol.zones {
+  min-height: 0;
+  overscroll-behavior: contain;
   list-style: none;
   margin: 0;
   padding: 6px;
@@ -193,14 +196,12 @@ ol.zones li button.on {
 
 .toolbar {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  left: max(14px, env(safe-area-inset-left, 0px));
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   z-index: 5;
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 32px));
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -210,6 +211,36 @@ ol.zones li button.on {
   box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
   max-width: calc(100vw - 32px)
 }
+
+.toolbar-body {
+  max-height: max(60px, min(calc(65dvh - 55px), calc(100dvh - var(--panel-header-height, 180px) - 150px)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.toolbar-body[hidden] { display: none; }
+
+.toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.toolbar-group-label {
+  width: 100%;
+  padding: 0 10px 3px;
+  color: var(--muted);
+  font: 600 10px var(--f-ui);
+}
+
+.toolbar .toolbar-toggle {
+  text-align: left;
+  font-weight: 600;
+}
+
+.toolbar.is-collapsed { width: auto; }
 
 .toolbar button {
   font: 500 13px var(--f-ui);

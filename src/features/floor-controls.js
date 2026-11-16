@@ -20,12 +20,11 @@ TNG.features.setupFloors = function (
       f1root.add(c);
     });
   } // toàn bộ nội thất tầng 1 vào 1 nhóm để ẩn/hiện
-  document.querySelector(".panel h1").textContent =
-    "Nhà máy may TNG Việt Đức · Tầng 1 + Tầng 2";
-  document.querySelector(".panel .sub").textContent =
-    "Mô hình 3D ghép 2 tầng: tầng 1 theo bản vẽ hoàn công, tầng 2 theo bản vẽ tầng 2 mới nhất và hồ sơ văn phòng";
-  document.querySelector(".panel .meta").textContent =
-    "≈ 180 × 70 m · 2 tầng · 24 tổ may tầng 2";
+  document.querySelector(".panel h1").textContent = "Nhà máy may TNG Việt Đức";
+  // document.querySelector(".panel .sub").textContent =
+  //   "Mô hình 3D ghép 2 tầng: tầng 1 theo bản vẽ hoàn công, tầng 2 theo bản vẽ tầng 2 mới nhất và hồ sơ văn phòng";
+  // document.querySelector(".panel .meta").textContent =
+  //   "≈ 180 × 70 m · 2 tầng · 24 tổ may tầng 2";
 
   let mode = "both",
     liftT = 0,

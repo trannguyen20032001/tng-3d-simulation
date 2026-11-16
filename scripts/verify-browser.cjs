@@ -170,6 +170,57 @@ async function load(file, modern) {
     await evaluate("localStorage.removeItem('tng-viet-duc-3d:toolbar-v1')");
     const current = await load("index.html", true);
     console.log("Refactored:", { ...current, parts: undefined });
+    if (process.argv.includes("--toolbar")) {
+      await evaluate("document.getElementById('panel').classList.remove('collapsed')");
+      await delay(150);
+      const toolbarChecks = await evaluate(`(() => {
+        const toolbar=document.querySelector('.toolbar');
+        const toggle=document.getElementById('toggleToolbar');
+        const body=document.getElementById('toolbarBody');
+        const groups=[...toolbar.querySelectorAll('.toolbar-group')].map(g=>
+          [...g.querySelectorAll('button')].map(b=>b.id));
+        toggle.click();
+        const collapsed=body.hidden&&toggle.getAttribute('aria-expanded')==='false';
+        toggle.click();
+        const expanded=!body.hidden&&toggle.getAttribute('aria-expanded')==='true';
+        const bounds=toolbar.getBoundingClientRect();
+        const panel=document.getElementById('panel').getBoundingClientRect();
+        return {groups,collapsed,expanded,left:bounds.left,bottom:bounds.bottom,
+          panelsSeparate:panel.bottom <= bounds.top - 8,
+          viewportHeight:innerHeight};
+      })()`);
+      assert.deepEqual(toolbarChecks.groups, [
+        ["vExt","vPersp","vTop"], ["mT1","mT2","mBoth"], ["mSplit","tCeil2"],
+        ["tSlideshow","tSpin","tMotion"],
+        ["tLabels","tFlow","tWalls","tTrees","tArea","tAgv","tAgvRoutes",
+          "tEnvSensors","tSewingBalance"],
+      ]);
+      assert.equal(toolbarChecks.collapsed, true);
+      assert.equal(toolbarChecks.expanded, true);
+      assert.equal(toolbarChecks.panelsSeparate, true);
+      assert.ok(toolbarChecks.left >= 0 && toolbarChecks.left < 30);
+      assert.ok(Math.abs(toolbarChecks.viewportHeight-toolbarChecks.bottom-14)<2);
+      for (const collapsed of [true, false]) {
+        await evaluate(`(() => {
+          const expected=${collapsed};
+          if(document.getElementById('panel').classList.contains('collapsed')!==expected)
+            document.getElementById('toggleList').click();
+          if(document.querySelector('.toolbar').classList.contains('is-collapsed')!==expected)
+            document.getElementById('toggleToolbar').click();
+        })()`);
+        await load("index.html", true);
+        assert.deepEqual(await evaluate(`[
+          document.getElementById('panel').classList.contains('collapsed'),
+          document.querySelector('.toolbar').classList.contains('is-collapsed'),
+          document.getElementById('toolbarBody').hidden,
+          document.getElementById('toggleToolbar').getAttribute('aria-expanded')
+        ]`), [collapsed, collapsed, collapsed, String(!collapsed)]);
+      }
+      assert.equal(errors.length, 0, errors.join("\n"));
+      console.log("PASS: toolbar layout and both panels restore expanded/collapsed state after reload.");
+      await send("Browser.close");
+      return;
+    }
     const picking = await evaluate(`(() => {
       const manager=TNG.state.interaction;
       const before={...manager.stats};
