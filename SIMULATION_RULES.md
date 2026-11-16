@@ -185,6 +185,25 @@ Mỗi cảm biến có một đèn tín hiệu nhấp nháy ở phía trên thâ
 
 ## Điều khiển hiển thị
 
+### Giám sát điện
+
+- Thẻ cố định góc dưới bên phải, hỗ trợ thu gọn/mở rộng và lưu trạng thái vào
+  localStorage. Trên màn hình hẹp, thẻ đặt phía trên toolbar để tránh chồng nhau.
+- Thu gọn chỉ giữ bốn chỉ số: điện năng trong ca, điện năng trong ngày (kWh),
+  hệ số công suất cosφ và nhiệt độ thiết bị điện (°C).
+- Mở rộng hiển thị thêm bảng điện năng cao điểm, bình thường, thấp điểm cho cả
+  ca và ngày. Tổng ca/ngày bằng tổng ba nhóm tương ứng.
+- Cảnh báo khi cosφ thấp hơn `minPowerFactor` hoặc nhiệt độ cao hơn
+  `maxTemperature`. Đúng ngưỡng không cảnh báo. Biểu tượng và màu cảnh báo vẫn
+  hiển thị ngay cạnh chỉ số khi thu gọn.
+- Dữ liệu hiện là ảnh chụp mô phỏng, chưa kết nối công tơ. Ngưỡng minh họa
+  cosφ 0,9 và nhiệt độ 60 °C nằm tại `src/features/electricity.js`; cần thay
+  bằng ngưỡng của thiết bị thực tế khi tích hợp.
+- Chuẩn bị mở rộng theo khu vực: `app.electricity.setReading(id, reading)` đăng ký
+  dữ liệu, `selectScope(id)` chọn thẻ tương ứng; chưa gắn click khu vực tự động.
+  Dữ liệu có `name`, `shift`/`day` (các khóa `peak`, `normal`, `offPeak`),
+  `powerFactor`, `temperature`, `simulated`.
+
 - Kệ pallet tầng 1 và hàng hóa phải nằm dưới mặt dưới sàn tầng 2 (cao độ 4,3 m).
   Đỉnh kệ hiện tại là 4,2 m. Nhãn nội thất tầng 1 ẩn khi hai tầng chồng nhau để
   không vẽ xuyên sàn; hiện lại khi chỉ xem tầng 1 hoặc tách tầng đủ khoảng hở.

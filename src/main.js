@@ -11,6 +11,7 @@
   TNG.state.environmentSensors.sensors.forEach((sensor) => hoverOutline.register(sensor.sensor));
   TNG.state.hoverOutline = hoverOutline;
   TNG.features.setupSlideshow(TNG.state);
+  TNG.features.setupElectricity(TNG.state);
   const toolbar = document.querySelector(".toolbar");
   const toolbarBody = document.createElement("div");
   toolbarBody.id = "toolbarBody";

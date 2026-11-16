@@ -170,6 +170,58 @@ async function load(file, modern) {
     await evaluate("localStorage.removeItem('tng-viet-duc-3d:toolbar-v1')");
     const current = await load("index.html", true);
     console.log("Refactored:", { ...current, parts: undefined });
+    if (process.argv.includes("--electricity")) {
+      const checks = await evaluate(`(() => {
+        const feature=TNG.state.electricity, card=document.getElementById('electricityCard');
+        const toggle=card.querySelector('button'), details=card.querySelector('#electricityDetails');
+        if(toggle.getAttribute('aria-expanded')==='false') toggle.click();
+        const text=card.textContent;
+        const initial={shift:card.querySelector('[data-metric="shift"]').textContent,
+          day:card.querySelector('[data-metric="day"]').textContent,
+          rows:card.querySelectorAll('tbody tr').length,
+          warnings:card.querySelectorAll('.electricity-metrics .is-warning').length};
+        const reading={name:'Khu thử nghiệm',shift:{peak:1,normal:2,offPeak:3},
+          day:{peak:4,normal:5,offPeak:6},powerFactor:feature.config.minPowerFactor,
+          temperature:feature.config.maxTemperature,simulated:true};
+        feature.setReading('test',reading);
+        const selected=feature.selectScope('test');
+        const atBoundary=card.querySelectorAll('.electricity-metrics .is-warning').length;
+        feature.setReading('test',{...reading,powerFactor:reading.powerFactor-0.01,
+          temperature:reading.temperature+0.1});
+        const outside=card.querySelectorAll('.electricity-metrics .is-warning').length;
+        const unknown=feature.selectScope('missing');
+        feature.selectScope('factory');
+        toggle.click();
+        const collapsed=details.hidden&&card.querySelectorAll('.electricity-metrics > div').length===4;
+        const bounds=card.getBoundingClientRect();
+        return {initial,selected,atBoundary,outside,unknown,collapsed,
+          scope:feature.scope,oneCard:document.querySelectorAll('#electricityCard').length===1,
+          bottom:innerHeight-bounds.bottom,right:innerWidth-bounds.right};
+      })()`);
+      assert.match(checks.initial.shift, /864/);
+      assert.match(checks.initial.day, /1[.\\s]?560/);
+      assert.equal(checks.initial.rows, 3);
+      assert.equal(checks.initial.warnings, 2);
+      assert.equal(checks.selected, true);
+      assert.equal(checks.atBoundary, 0);
+      assert.equal(checks.outside, 2);
+      assert.equal(checks.unknown, false);
+      assert.equal(checks.collapsed, true);
+      assert.equal(checks.scope, "factory");
+      assert.equal(checks.oneCard, true);
+      assert.ok(checks.bottom>=0&&checks.bottom<30&&checks.right>=0&&checks.right<30);
+      await load("index.html", true);
+      assert.equal(await evaluate("document.getElementById('electricityDetails').hidden"), true);
+      await evaluate("document.querySelector('#electricityCard header button').click()");
+      await load("index.html", true);
+      assert.equal(await evaluate("document.getElementById('electricityDetails').hidden"), false);
+      assert.equal(errors.length, 0, errors.join("\n"));
+      const screenshot=await send("Page.captureScreenshot", {format:"png"});
+      fs.writeFileSync(path.join(root,".tmp","electricity.png"),Buffer.from(screenshot.data,"base64"));
+      console.log("PASS: electricity totals, thresholds, area API, collapse persistence and layout.");
+      await send("Browser.close");
+      return;
+    }
     if (process.argv.includes("--toolbar")) {
       await evaluate("document.getElementById('panel').classList.remove('collapsed')");
       await delay(150);
