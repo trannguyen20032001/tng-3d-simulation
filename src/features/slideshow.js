@@ -3,7 +3,7 @@
 
   TNG.features.setupSlideshow = function setupSlideshow(app) {
     const F1 = app.f1;
-    const durationMs = 3000;
+    const durationMs = 30000;
     const orbitRadiansPerSecond = 0.2;
     const zoomDurationMs = 900;
     const zoomScale = 0.88;
@@ -225,8 +225,11 @@
     document.addEventListener(
       "click",
       (event) => {
-        if (event.target.closest("button") === button ||
-          event.target.closest("#toggleToolbar")) return;
+        if (
+          event.target.closest("button") === button ||
+          event.target.closest("#toggleToolbar")
+        )
+          return;
         if (
           event.target.closest(".toolbar, ol.zones, .object-info header button")
         ) {

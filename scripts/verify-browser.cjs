@@ -216,6 +216,14 @@ async function load(file, modern) {
       await load("index.html", true);
       assert.equal(await evaluate("document.getElementById('electricityDetails').hidden"), false);
       assert.equal(errors.length, 0, errors.join("\n"));
+      const panelsOverlap = await evaluate(`(() => {
+        TNG.state.sewingTeams.select(TNG.state.sewingTeams.teams[0]);
+        const team = document.querySelector('.sewing-team-details').getBoundingClientRect();
+        const electricity = document.getElementById('electricityCard').getBoundingClientRect();
+        return team.left < electricity.right && team.right > electricity.left &&
+          team.top < electricity.bottom && team.bottom > electricity.top;
+      })()`);
+      assert.equal(panelsOverlap, false, "Sewing details overlap electricity dashboard");
       const screenshot=await send("Page.captureScreenshot", {format:"png"});
       fs.writeFileSync(path.join(root,".tmp","electricity.png"),Buffer.from(screenshot.data,"base64"));
       console.log("PASS: electricity totals, thresholds, area API, collapse persistence and layout.");

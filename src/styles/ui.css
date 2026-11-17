@@ -371,6 +371,7 @@ ol.zones li button.on {
 }
 
 .team-details-body {
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 0 14px 14px;
@@ -713,6 +714,22 @@ ol.zones li button.on {
 .electricity-unit, .electricity-source { color: var(--muted); font-size: 10px; line-height: 1.5; }
 .electricity-alerts { padding: 9px; border-radius: 6px; background: var(--chip-bg); font-size: 12px; }
 .electricity-card .is-warning { color: #c45316; }
+.electricity-chart {
+  box-sizing: border-box;
+  width: calc(100% + 28px);
+  margin: 14px -14px;
+  padding: 0 8px;
+  color: #facc15;
+}
+.electricity-chart[hidden] { display: none; }
+.electricity-chart figcaption { font-size: 12px; font-weight: 600; }
+.electricity-chart figcaption span { display: block; margin-top: 4px; color: inherit; font-size: 10px; font-weight: 400; }
+.electricity-chart svg { display: block; width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+.electricity-chart svg text { fill: #facc15; font: 9px var(--f-mono); }
+.electricity-chart-grid { stroke: var(--line); stroke-width: 1; }
+.electricity-chart-bar { fill: #22c55e; }
+.electricity-chart-bar:hover, .electricity-chart-bar:focus { fill: #86efac; outline: none; }
+.electricity-chart-detail { min-height: 15px; margin: 0; font-size: 10px; color: inherit; }
 @media (prefers-color-scheme: dark) {
   .electricity-card .is-warning { color: #ffbd69; }
 }
@@ -721,6 +738,12 @@ ol.zones li button.on {
     bottom: calc(var(--toolbar-height, 55px) + 28px);
     max-height: max(120px, calc(100dvh - var(--toolbar-height, 55px) - 56px));
   }
+}
+
+/* Production details scroll above the electricity dashboard. */
+body:has(.electricity-card) .object-info.sewing-team-details {
+  right: max(16px, env(safe-area-inset-right, 0px));
+  max-height: max(80px, calc(var(--electricity-top, 30dvh) - 28px - env(safe-area-inset-top, 0px)));
 }
 
 @media (prefers-reduced-motion:reduce) {
