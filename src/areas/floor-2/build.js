@@ -57,6 +57,7 @@ TNG.areas.buildFloor2 = function (app) {
   const chairAt = TNG.components.chairAt({ box, cyl, C });
   const lineHeads = []; // [x,z,y_dwg] đầu mỗi tổ may (để treo biển)
   const sewingZones = [];
+  const programmingMachinePositions = [];
   let nSew = 0;
   D.fur.forEach(([cx, cy, w, h, L]) => {
     const x = X(cx),
@@ -64,6 +65,8 @@ TNG.areas.buildFloor2 = function (app) {
       sx = w / 1000,
       sz = h / 1000;
     if (L === 1) {
+      programmingMachinePositions.push([x + 0.65, 1.95, z - 0.55]);
+      cyl("programmingLampPole", x + 0.65, 1.7, z - 0.55, 0.025, 0.5, "y", 0x263746);
       // khu máy lập trình: máy may mẫu tự động JACK theo ảnh thực tế — tủ trắng, mặt bàn kem 3 mảnh, thanh ray + đầu máy trắng sọc xanh, xích cáp đen, cuộn chỉ, biển số
       const WH = 0xf4f6f7,
         TOP = 0xe3dccb,
@@ -1480,6 +1483,50 @@ TNG.areas.buildFloor2 = function (app) {
     app,
   );
 
+  // Two instance batches keep blinking status lamps inexpensive to draw.
+  const lampGroup = new THREE.Group();
+  lampGroup.name = "Programming machine status lamps";
+  scene.add(lampGroup);
+  const redIndices = new Set(
+    Array.from({ length: Math.min(7, programmingMachinePositions.length) }, (_, index) =>
+      Math.floor(index * programmingMachinePositions.length / 7),
+    ),
+  );
+  const lampGeometry = new THREE.SphereGeometry(0.13, 10, 8);
+  const lampBatches = [];
+  for (const isFault of [false, true]) {
+    const positions = programmingMachinePositions.filter((_, index) => redIndices.has(index) === isFault);
+    if (!positions.length) continue;
+    const color = isFault ? 0xff2424 : 0x22ff66;
+    const material = new THREE.MeshBasicMaterial({ color, toneMapped: false });
+    const lamps = new THREE.InstancedMesh(lampGeometry, material, positions.length);
+    lamps.name = isFault ? "Programming machine red lamps" : "Programming machine green lamps";
+    const matrix = new THREE.Matrix4();
+    positions.forEach(([x, y, z], index) => {
+      matrix.makeTranslation(x, y, z);
+      lamps.setMatrixAt(index, matrix);
+    });
+    lamps.instanceMatrix.needsUpdate = true;
+    lampGroup.add(lamps);
+    lampBatches.push({ lamps, color: new THREE.Color(color) });
+  }
+  let lampsBright = true;
+  window.setInterval(() => {
+    if (document.hidden) return;
+    for (let node = lampGroup; node; node = node.parent) if (!node.visible) return;
+    lampsBright = !lampsBright;
+    lampBatches.forEach(({ lamps, color }) => {
+      lamps.material.color.copy(color).multiplyScalar(lampsBright ? 1 : 0.12);
+    });
+    F1.invalidate();
+  }, 500);
+  app.f2.programmingMachines = {
+    count: programmingMachinePositions.length,
+    redCount: redIndices.size,
+    lampGroup,
+  };
+
+  // Two instance batches keep blinking status lamps inexpensive to draw.
   // Match interactive areas to the same order as the numbered sewing signs.
   app.f2.sewingTeams = lineHeads.map(([x, z], index) => ({
     id: index + 1,

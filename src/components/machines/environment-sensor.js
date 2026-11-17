@@ -15,11 +15,9 @@
       emissiveIntensity: 0.75,
       roughness: 0.25,
     });
-    const signalMaterial = new THREE.MeshStandardMaterial({
-      color: 0x00e85a,
-      emissive: 0x18b94d,
-      emissiveIntensity: 1.6,
-      roughness: 0.18,
+    const signalMaterial = new THREE.MeshBasicMaterial({
+      color: 0x22ff66,
+      toneMapped: false,
     });
     const signalBase = new THREE.MeshStandardMaterial({
       color: 0x263746,
@@ -51,10 +49,11 @@
     signalLight.position.set(0, 0.77, 0.14);
     sensor.add(signalLight);
     const signalBeamMaterial = new THREE.MeshBasicMaterial({
-      color: 0x48ff7a,
+      color: 0x22ff66,
       transparent: true,
       opacity: 0.38,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.NormalBlending,
+      toneMapped: false,
       depthWrite: false,
       side: THREE.DoubleSide,
     });

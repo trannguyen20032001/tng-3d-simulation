@@ -16,9 +16,9 @@
       humidity: { warning: 60, critical: 65 },
     };
     const STATUS = {
-      normal: { label: "Hoạt động bình thường", color: 0x00e85a },
+      normal: { label: "Hoạt động bình thường", color: 0x22ff66 },
       warning: { label: "Gần ngưỡng cảnh báo", color: 0xffb000 },
-      critical: { label: "Vượt ngưỡng cảnh báo", color: 0xff2020 },
+      critical: { label: "Vượt ngưỡng cảnh báo", color: 0xff2424 },
     };
     const specs = [
       {
@@ -342,15 +342,15 @@
         const flash = Math.max(0, Math.sin(now * 0.009 + data.phase));
         if (data.renderedAlert !== data.alert) {
           signalMaterial.color.setHex(status.color);
-          signalMaterial.emissive.setHex(status.color);
           signalLight.color.setHex(status.color);
           signalBeamMaterial.color.setHex(status.color);
           data.coverageFill.material.color.setHex(status.color);
           data.coverageEdge.material.color.setHex(status.color);
           data.renderedAlert = data.alert;
         }
-        signalMaterial.emissiveIntensity = 0.7 + flash * 2.5;
-        signalBeamMaterial.opacity = 0.2 + flash * 0.42;
+        // Preserve saturated status colors instead of washing them out with exposure.
+        signalMaterial.color.setHex(status.color).multiplyScalar(0.35 + flash * 0.65);
+        signalBeamMaterial.opacity = 0.18 + flash * 0.25;
         signalLight.intensity =
           data.alert === "critical"
             ? 1.15

@@ -171,6 +171,14 @@ async function load(file, modern) {
     const current = await load("index.html", true);
     console.log("Refactored:", { ...current, parts: undefined });
     if (process.argv.includes("--electricity")) {
+      const lampCounts = await evaluate(`(() => {
+        const machines = TNG.state.f2.programmingMachines;
+        return { total: machines.count, red: machines.redCount,
+          instances: machines.lampGroup.children.reduce((sum, mesh) => sum + mesh.count, 0) };
+      })()`);
+      assert.equal(lampCounts.red, 7);
+      assert.equal(lampCounts.instances, lampCounts.total);
+      assert.ok(lampCounts.total > 7);
       const checks = await evaluate(`(() => {
         const feature=TNG.state.electricity, card=document.getElementById('electricityCard');
         const toggle=card.querySelector('button'), details=card.querySelector('#electricityDetails');
