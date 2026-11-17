@@ -2,8 +2,10 @@
   "use strict";
 
   TNG.core.createAgvRoute = function createAgvRoute(points) {
-    if (!points.length) throw new Error("AGV route requires at least one point.");
-    const closed = points.length > 1 && points[0].equals(points[points.length - 1]);
+    if (!points.length)
+      throw new Error("AGV route requires at least one point.");
+    const closed =
+      points.length > 1 && points[0].equals(points[points.length - 1]);
     const segments = [];
     let length = 0;
     for (let index = 1; index < points.length; index++) {
@@ -28,13 +30,19 @@
         }
         const distance = Math.max(0, Math.min(1, progress)) * length;
         const segment =
-          segments.find((item) => distance < item.endDistance) || segments[segments.length - 1];
-        const fraction = (distance - segment.endDistance + segment.length) / segment.length;
+          segments.find((item) => distance < item.endDistance) ||
+          segments[segments.length - 1];
+        const fraction =
+          (distance - segment.endDistance + segment.length) / segment.length;
         position.lerpVectors(segment.start, segment.end, fraction);
         direction.subVectors(segment.end, segment.start).normalize();
       },
       samplePhase(phase, position, direction, stalled = false) {
-        const progress = stalled ? 0.5 : closed ? phase : 1 - Math.abs(phase * 2 - 1);
+        const progress = stalled
+          ? 0.5
+          : closed
+            ? phase
+            : 1 - Math.abs(phase * 2 - 1);
         this.sample(progress, position, direction);
         if (!closed && phase >= 0.5 && !stalled) direction.negate();
       },
@@ -66,40 +74,47 @@
     app.f2.f2.add(floor2System);
 
     const routes = [
-      // {
-      //   color: 0x2e83cc,
-      //   points: [
-      //     [58, 22],
-      //     [58, 7],
-      //     [42, 7],
-      //     [42, -14],
-      //     [58, -14],
-      //   ],
-      //   speed: 0.045,
-      //   load: 0xd7aa68,
-      // },
-      // {
-      //   color: 0x16a085,
-      //   points: [
-      //     [31, 20],
-      //     [9, 20],
-      //     [9, 4],
-      //     [31, 4],
-      //   ],
-      //   speed: 0.057,
-      //   load: 0x92bde6,
-      // },
-      // {
-      //   color: 0xe58a2f,
-      //   points: [
-      //     [-7, 12],
-      //     [-29, 12],
-      //     [-29, -11],
-      //     [-7, -11],
-      //   ],
-      //   speed: 0.051,
-      //   load: 0xd9b784,
-      // },
+      {
+        color: 0x2e83cc,
+        points: [
+          [60, 18.5],
+          [60, 0],
+          [35, 0],
+          [35, 32],
+          [47, 32],
+          [47, 18.5],
+          [60, 18.5],
+        ],
+        speed: 0.045,
+        load: 0xd7aa68,
+      },
+      {
+        color: 0x16a085,
+        points: [
+          [31, -30],
+          [31, 27],
+          [-5, 27],
+          [-5, 10],
+          [31, 10],
+          [31, -30],
+        ],
+        speed: 0.035,
+        load: 0x92bde6,
+      },
+      // AGV-03 dừng giữa tuyến do lỗi, hiển thị đèn và dấu cảnh báo đỏ.
+      {
+        color: 0xe58a2f,
+        points: [
+          [-30, 7],
+          // [-29, 12],
+          // [-29, -11],
+          // [-7, -11],
+        ],
+        speed: 0.051,
+        load: 0xd9b784,
+        task: "AGV gặp lỗi, chờ xử lý",
+        stalled: true,
+      },
       {
         color: 0x2f60b4,
         points: [
@@ -129,9 +144,7 @@
         );
         const path = TNG.core.createAgvRoute(points);
         const shuttle = !path.closed;
-        const lineGeometry = new THREE.BufferGeometry().setFromPoints(
-          points,
-        );
+        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.Line(
           lineGeometry,
           new THREE.LineDashedMaterial({
@@ -202,7 +215,7 @@
           [59.5, 17],
           [59.5, 35],
         ],
-        speed: 0.010,
+        speed: 0.01,
         load: 0x9bc9ca,
         loadKg: 90,
         task: "Vận chuyển hàng trên tuyến ngang tầng 2",
@@ -215,7 +228,7 @@
           [59.5, 18.5],
           [59.5, 35],
         ],
-        speed: 0.010,
+        speed: 0.01,
         load: 0x9bc9ca,
         loadKg: 90,
         task: "Vận chuyển hàng trên tuyến ngang tầng 2",
@@ -295,7 +308,9 @@
       info.floor.textContent = agent.floor;
       info.status.textContent = agent.stalled
         ? "Cảnh báo: AGV dừng hoạt động"
-        : agent.path.length === 0 ? "Đang đứng yên" : "Đang vận chuyển";
+        : agent.path.length === 0
+          ? "Đang đứng yên"
+          : "Đang vận chuyển";
       info.battery.textContent = `${Math.round(agent.battery)}%`;
       info.load.textContent = `${agent.loadKg} kg`;
       info.speed.textContent = `${agent.speedMs.toFixed(2)} m/s`;
@@ -507,7 +522,8 @@
         path.samplePhase(phase, point, tangent, stalled);
         robot.position.copy(point);
         robot.position.y = 0.02;
-        if (tangent.lengthSq() > 0) robot.rotation.y = Math.atan2(tangent.x, tangent.z);
+        if (tangent.lengthSq() > 0)
+          robot.rotation.y = Math.atan2(tangent.x, tangent.z);
         const flash = 0.5 + Math.max(0, Math.sin(elapsed * 7 + index));
         robot.userData.beaconMaterial.emissiveIntensity = 0.9 + flash * 1.4;
         robot.userData.beaconBeamMaterial.opacity = 0.2 + flash * 0.42;
@@ -520,7 +536,9 @@
           ? "Cảnh báo: AGV dừng hoạt động"
           : warning
             ? "Cảnh báo: pin yếu"
-            : hoveredAgent.path.length === 0 ? "Đang đứng yên" : "Đang hoạt động";
+            : hoveredAgent.path.length === 0
+              ? "Đang đứng yên"
+              : "Đang hoạt động";
         hoverStatus.classList.toggle(
           "warning",
           warning && !hoveredAgent.stalled,

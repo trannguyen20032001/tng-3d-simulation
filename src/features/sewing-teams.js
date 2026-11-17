@@ -90,7 +90,7 @@
     panel.className = "sewing-team-panel";
     panel.setAttribute("role", "tooltip");
     panel.hidden = true;
-    panel.innerHTML = '<strong></strong><small>Cân bằng chuyền · Dữ liệu mô phỏng</small><span>Sản lượng / mục tiêu <b class="team-output"></b></span><span>Công đoạn nghẽn <b class="team-bottleneck"></b></span><span>Sản lượng công đoạn <b class="team-operation-output"></b></span>';
+    // panel.innerHTML = '<strong></strong><small>Cân bằng chuyền · Dữ liệu mô phỏng</small><span>Sản lượng / mục tiêu <b class="team-output"></b></span><span>Công đoạn nghẽn <b class="team-bottleneck"></b></span><span>Sản lượng công đoạn <b class="team-operation-output"></b></span>';
     stage.appendChild(panel);
     const details = document.createElement("section");
     details.className = "object-info sewing-team-details";

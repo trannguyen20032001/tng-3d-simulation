@@ -735,6 +735,9 @@ async function load(file, modern) {
     console.log("PASS: slideshow priorities, timer, orbit, popups, floors, loop and stop.");
     // Preferences survive a reload, then reset the headless profile to defaults.
     await evaluate(
+      "if(document.getElementById('mSplit').getAttribute('aria-pressed')!=='true')document.getElementById('mSplit').click()",
+    );
+    await evaluate(
       "document.getElementById('mT2').click();document.getElementById('tAgv').click();document.getElementById('tAgvRoutes').click();document.getElementById('tSewingBalance').click()",
     );
     await delay(50);
@@ -757,6 +760,8 @@ async function load(file, modern) {
       [false, true],
     );
     assert.equal(await evaluate("TNG.state.agv.robotGroups.every(g=>!g.visible)"), true);
+    assert.equal(await evaluate("document.getElementById('mSplit').getAttribute('aria-pressed')"), "true");
+    await evaluate("document.getElementById('mSplit').click()");
     assert.equal(await evaluate("TNG.state.agv.routeGroups.every(g=>!g.visible)"), true);
     assert.equal(await evaluate("document.getElementById('tSewingBalance').getAttribute('aria-pressed')"), "false");
     assert.equal(await evaluate("TNG.state.sewingTeams.teams.every(t=>!t.floor.visible)"), true);

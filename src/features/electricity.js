@@ -130,9 +130,6 @@
         ? `⚠ ${messages.join(" ")}`
         : "Các thông số trong ngưỡng cấu hình.";
       alerts.classList.toggle("is-warning", messages.length > 0);
-      card.querySelector(".electricity-source").textContent = reading.simulated
-        ? "Dữ liệu mô phỏng · Chưa kết nối công tơ. Phân nhóm khung giờ từ dữ liệu cấu hình."
-        : "Điện năng tổng được tính từ ba nhóm khung giờ.";
     };
     applyCollapsed();
     render();

@@ -44,12 +44,13 @@
         if (selected && !isPressed(selected)) document.getElementById(selected).click();
       };
       restoreChoice(viewIds);
-      restoreChoice(modeIds);
       toggleIds.forEach((id) => {
         if (typeof saved[id] === "boolean" && saved[id] !== isPressed(id)) {
           document.getElementById(id)?.click();
         }
       });
+      // Restoring split mode can select both floors; apply the saved floor choice last.
+      restoreChoice(modeIds);
       panels.forEach((panel) => {
         if (typeof saved[panel.key] === "boolean" &&
           saved[panel.key] !== panelElement(panel).classList.contains(panel.className)) {

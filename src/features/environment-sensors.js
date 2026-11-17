@@ -23,41 +23,43 @@
     const specs = [
       {
         floor: "Tầng 1",
-        position: [-58, 2.2, 12],
-        temperature: 25.4,
+        position: [-62, 3.7, 12],
+        temperature: 30.4,
         humidity: 59,
         // Mỗi điểm là [x, z] tính bằng mét, tương đối so với vị trí sensor.
         // Ba điểm sẽ tạo thành vùng tam giác.
         coveragePoints: [
-          [-5.5, -3.5],
-          [5, -2.5],
-          [-0.5, 5.5],
+          [18, 20],
+          [18, -13],
+          [-25, -13],
+          [-25, 20],
         ],
       },
       {
         floor: "Tầng 1",
-        position: [-7, 2.2, -3],
-        temperature: 25.9,
+        position: [10, 2.2, -3],
+        temperature: 23.9,
         humidity: 57,
         // Bốn điểm sẽ tạo vùng tứ giác.
         coveragePoints: [
-          [-5.5, -4],
-          [5.5, -4],
-          [4.5, 4.5],
-          [-5, 4.5],
+          [22, 10],
+          [-13, 10],
+          [-13, -30],
+          [22, -30],
         ],
       },
       {
         floor: "Tầng 1",
         position: [54, 2.2, 12],
-        temperature: 26.6,
+        temperature: 28.6,
         humidity: 56,
         coveragePoints: [
-          [-5.5, -3],
-          [-1.5, -5],
-          [5, -3.5],
-          [4.5, 4],
-          [-4, 4.5],
+          [-20, -19],
+          [-5, -19],
+          [-5, -13],
+          [8, -13],
+          [8, 10],
+          [-20, 10],
         ],
       },
       {
@@ -232,7 +234,9 @@
     };
     const findPointerTarget = () => {
       const object = app.interaction.pickDevice(pointer);
-      return object?.userData.agvAgent || object?.userData.environmentSensor || null;
+      return (
+        object?.userData.agvAgent || object?.userData.environmentSensor || null
+      );
     };
     F1.overlayRenderers.push(() => {
       const canvas = F1.renderer.domElement;
@@ -361,7 +365,10 @@
       return false;
     });
     window.setInterval(() => {
-      if (!document.hidden && sensors.some((data) => visibleInScene(data.sensor))) {
+      if (
+        !document.hidden &&
+        sensors.some((data) => visibleInScene(data.sensor))
+      ) {
         F1.invalidate();
       }
     }, 1000);
