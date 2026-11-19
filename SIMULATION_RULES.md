@@ -2,7 +2,7 @@
 
 Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ may/cân bằng chuyền và mọi thiết bị hoặc đối tượng tương tác được bổ sung sau này. Các thông số và ngoại lệ có thể được người dùng chỉnh sửa trực tiếp tại đây.
 
-**Phạm vi cập nhật:** Việc thống nhất quy tắc trong tài liệu không tự thay đổi code đang chạy. Theo yêu cầu của người dùng, code hiện tại được giữ nguyên, đặc biệt là cân bằng chuyền. Những khác biệt của cân bằng chuyền được ghi rõ trong phần hiện trạng bên dưới; không tự sửa code để áp dụng quy tắc chung nếu chưa có yêu cầu tiếp theo.
+**Phạm vi cập nhật:** Các quy tắc mô phỏng trong tài liệu không tự thay đổi logic đang chạy, đặc biệt là ngoại lệ cân bằng chuyền được ghi ở phần hiện trạng. Các yêu cầu giao diện mới ở phần **Điều khiển hiển thị** mô tả hành vi đã được yêu cầu triển khai. Không tự sửa logic mô phỏng chỉ để áp dụng quy tắc chung nếu chưa có yêu cầu tiếp theo.
 
 ## Quy tắc chung mặc định cho mọi đối tượng
 
@@ -25,7 +25,7 @@ Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ 
 
 ### 3. Click chọn, bảng chi tiết và camera
 
-- Click trực tiếp vào đối tượng sẽ chọn đối tượng, mở bảng thông số chi tiết ở **góc trên bên phải**, đồng thời đưa camera đến và bám theo đối tượng.
+- Click trực tiếp vào đối tượng sẽ chọn đối tượng, mở bảng thông số chi tiết ở **góc trên bên phải** (vị trí trên màn hình dưới 450px theo phần **Điều khiển hiển thị**), đồng thời đưa camera đến và bám theo đối tượng.
 - Đối tượng di chuyển thì camera đi theo; đối tượng cố định thì camera giữ điểm quan sát tại đối tượng đó. Vị trí bám cập nhật khi tầng chứa đối tượng di chuyển hoặc tách tầng.
 - Tại một thời điểm chỉ có một đối tượng được chọn và một bảng chi tiết. Chọn đối tượng mới, kể cả khác loại, sẽ thay nội dung bảng và chuyển camera sang bám đối tượng mới.
 - Click chọn cũng đóng panel hover đang hiện. Bảng chi tiết không tự ẩn sau 15 giây; thời hạn này chỉ áp dụng cho panel hover.
@@ -61,7 +61,7 @@ Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ 
 - Vùng tương tác khớp với vạch sàn của từng tổ, không lấy trung điểm giữa hai tổ để tránh tràn vào lối đi (đặc biệt tổ 8–9).
 - Panel nổi hiển thị tên tổ, sản lượng/mục tiêu và công đoạn có sản lượng thấp nhất.
 - Panel hover đóng khi rời tổ, tương tác camera hoặc ẩn tầng 2. Tổ đang chọn giữ viền đến khi đóng bảng chi tiết hoặc chọn đối tượng khác.
-- Click vào tổ mở bảng chi tiết ở góc trên bên phải; chọn tổ khác thay nội dung bảng. Đóng bằng nút × hoặc Escape. Chọn AGV/cảm biến đóng bảng tổ may; chọn tổ may đóng popup AGV/cảm biến. Ẩn tầng 2 đóng bảng chi tiết.
+- Click vào tổ mở bảng chi tiết ở góc trên bên phải, hoặc bên dưới tiêu đề nhà máy nếu màn hình dưới 450px; chọn tổ khác thay nội dung bảng. Đóng bằng nút × hoặc Escape. Chọn AGV/cảm biến đóng bảng tổ may; chọn tổ may đóng popup AGV/cảm biến. Ẩn tầng 2 đóng bảng chi tiết.
 - Bảng chi tiết gồm: sản lượng lũy kế/mục tiêu hiện tại; sản lượng từng công đoạn có mã thiết bị và kế hoạch; công đoạn nghẽn (sản lượng thấp nhất); chênh lệch công đoạn này trừ công đoạn liền trước; thời gian từ sản phẩm cuối và trạng thái chạy/dừng; mục tiêu, thực tế, tỷ lệ hoàn thành, hiệu suất; mã hàng, số lao động, sản lượng theo giờ, nhịp thực tế/yêu cầu, dự báo cuối ca; tỷ lệ lỗi khi có dữ liệu kiểm hàng. Thiếu dữ liệu kiểm hàng phải ghi rõ, không coi là 0% lỗi.
 - Tỷ lệ đạt = sản lượng thực tế / mục tiêu hiện tại. Dải sàn xanh khi **≥95%**, vàng khi **≥85% và <95%**, đỏ khi **<85%**. Đúng 85% là vàng, đúng 95% là xanh.
 - Tổ đạt dưới 85% có dấu chấm than đỏ nhấp nháy phía trên; bấm dấu này mở chi tiết và đưa camera đến tổ. Cảnh báo ẩn khi tầng 2 bị ẩn hoặc tổ đạt từ 85%.
@@ -185,17 +185,26 @@ Mỗi cảm biến có một đèn tín hiệu nhấp nháy ở phía trên thâ
 
 ## Điều khiển hiển thị
 
+### Bố cục và hành vi popup
+
+- Tiêu đề **Nhà máy may TNG Việt Đức** nằm trên một dòng, kể cả trên màn hình nhỏ; kích thước chữ được điều chỉnh để không xuống dòng.
+- Nút thu gọn/mở rộng **Điều khiển** nằm ở đầu popup, cùng cách bố trí với nút thu gọn của bảng **Nhà máy may TNG Việt Đức**.
+- Khi nội dung của bảng khu vực, bảng điều khiển, giám sát điện hoặc popup chi tiết dài hơn vùng hiển thị, phần nội dung cuộn dọc và có thanh cuộn dễ nhận biết. Tiêu đề và nút đóng của popup chi tiết vẫn ở trên, không bị cuộn khỏi tầm nhìn.
+- Với chiều rộng màn hình **dưới 768px**, chỉ một popup được mở tại một thời điểm. Mở bảng khu vực, bảng điều khiển, giám sát điện hoặc popup chi tiết thiết bị/tổ may/khu vực sẽ đóng popup đang mở trước đó. Nút của bảng đã thu gọn vẫn là điểm mở lại, trừ trường hợp nút giám sát điện được ẩn khi bảng điều khiển đang mở.
+- Ở mọi kích thước màn hình, bấm ra ngoài bảng khu vực, bảng điều khiển hoặc giám sát điện đang mở sẽ thu gọn bảng đó; bấm ra ngoài popup chi tiết khu vực của slideshow sẽ đóng popup khu vực. Popup chi tiết thiết bị, AGV, cảm biến và tổ may/cân bằng chuyền **không tự đóng** khi bấm ra ngoài; chúng đóng bằng nút đóng, chọn đối tượng khác hoặc các hành động đóng đã quy định riêng.
+- Với chiều rộng màn hình **dưới 768px**, khi mở bảng điều khiển, nút **Giám sát điện** thu gọn không được đè lên bảng: nút ẩn đi và hiện lại khi thu gọn bảng điều khiển.
+- Với chiều rộng màn hình **dưới 450px**, popup chi tiết AGV, cảm biến, tổ may/cân bằng chuyền và các thiết bị hoặc khu vực khác bắt đầu **bên dưới tiêu đề Nhà máy may TNG Việt Đức**; chiều cao được giới hạn để nội dung cuộn trong popup thay vì chồng lên tiêu đề.
+
 ### Giám sát điện
 
-- Thẻ cố định góc dưới bên phải, hỗ trợ thu gọn/mở rộng và lưu trạng thái vào
-  localStorage. Trên màn hình hẹp, thẻ đặt phía trên toolbar để tránh chồng nhau.
-- Thu gọn chỉ giữ bốn chỉ số: điện năng trong ca, điện năng trong ngày (kWh),
-  hệ số công suất cosφ và nhiệt độ thiết bị điện (°C).
+- Thẻ hỗ trợ thu gọn/mở rộng và lưu trạng thái vào localStorage. **Thẻ thu gọn** bám góc dưới bên phải; khi chiều rộng màn hình **tối đa 820px**, **thẻ mở rộng** nằm phía trên bảng điều khiển để đọc được nội dung.
+- Khi thu gọn, thẻ thu nhỏ và **chỉ hiện chữ “Giám sát điện”**; ẩn phạm vi, mũi tên và toàn bộ chỉ số. Bấm vào dòng chữ để mở lại.
+- Nút **Giám sát điện** khi thu gọn dùng cùng cỡ chữ, độ đậm, phông chữ, khoảng đệm và kiểu khung với nút **Điều khiển**, kể cả trên màn hình nhỏ.
+- Khi mở rộng, thẻ hiển thị điện năng trong ca, điện năng trong ngày (kWh), hệ số công suất cosφ và nhiệt độ thiết bị điện (°C).
 - Mở rộng hiển thị thêm bảng điện năng cao điểm, bình thường, thấp điểm cho cả
   ca và ngày. Tổng ca/ngày bằng tổng ba nhóm tương ứng.
 - Cảnh báo khi cosφ thấp hơn `minPowerFactor` hoặc nhiệt độ cao hơn
-  `maxTemperature`. Đúng ngưỡng không cảnh báo. Biểu tượng và màu cảnh báo vẫn
-  hiển thị ngay cạnh chỉ số khi thu gọn.
+  `maxTemperature`. Đúng ngưỡng không cảnh báo. Biểu tượng và màu cảnh báo hiển thị cạnh chỉ số khi thẻ mở rộng.
 - Dữ liệu hiện là ảnh chụp mô phỏng, chưa kết nối công tơ. Ngưỡng minh họa
   cosφ 0,9 và nhiệt độ 60 °C nằm tại `src/features/electricity.js`; cần thay
   bằng ngưỡng của thiết bị thực tế khi tích hợp.

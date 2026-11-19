@@ -66,7 +66,7 @@ body {
   position: fixed;
   top: calc(12px + env(safe-area-inset-top, 0px));
   left: max(16px, env(safe-area-inset-left, 0px));
-  width: 300px;
+  width: 350px;
   max-width: calc(100vw - 32px);
   background: var(--panel);
   border: 1px solid var(--line);
@@ -99,7 +99,7 @@ body {
   line-height: 1.25;
   margin: 0;
   font-weight: 700;
-  text-wrap: balance
+  white-space: nowrap
 }
 
 .panel .sub {
@@ -544,6 +544,9 @@ ol.zones li button.on {
   right: max(16px, env(safe-area-inset-right, 0px));
   top: calc(12px + env(safe-area-inset-top, 0px));
   z-index: 4;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -572,6 +575,7 @@ ol.zones li button.on {
 
 .object-info header {
   display: flex;
+  flex-shrink: 0;
   justify-content: space-between;
   align-items: flex-start;
   padding: 12px 14px 10px;
@@ -605,6 +609,12 @@ ol.zones li button.on {
 .object-info dl {
   margin: 0;
   padding: 6px 14px 10px
+}
+
+.object-info:not(.sewing-team-details) > dl {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .object-info dl div {
@@ -654,6 +664,8 @@ ol.zones li button.on {
     right: max(16px, env(safe-area-inset-right, 0px))
   }
 
+  .panel h1 { font-size: clamp(12px, 3.6vw, 15px); }
+
   .object-info {
     width: min(244px, calc(100vw - 32px))
   }
@@ -682,19 +694,50 @@ ol.zones li button.on {
   box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
 }
 
-.electricity-card header { display: flex; justify-content: space-between; gap: 10px; }
-.electricity-card h2 { margin: 0; font-size: 15px; }
+.electricity-card.is-collapsed {
+  width: auto;
+  max-height: none;
+  padding: 6px;
+  border-radius: 10px;
+}
+.electricity-title { display: block; font-size: 15px; font-weight: 700; }
 .electricity-card h3 { margin: 12px 0 8px; font-size: 12px; }
 .electricity-card small { color: var(--muted); font-size: 11px; }
 .electricity-card header button {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.electricity-card.is-collapsed header button {
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font: 600 13px var(--f-ui);
+  white-space: nowrap;
+}
+.electricity-card.is-collapsed .electricity-title { font: inherit; }
+.electricity-card.is-collapsed header button:hover { background: var(--chip-bg); }
+.electricity-toggle-icon {
+  display: grid;
   width: 30px;
   height: 30px;
+  place-items: center;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--chip-bg);
-  color: var(--ink);
-  cursor: pointer;
+  box-sizing: border-box;
 }
+.electricity-card.is-collapsed .electricity-scope,
+.electricity-card.is-collapsed .electricity-toggle-icon { display: none; }
 .electricity-card button:focus-visible { outline: 2px solid var(--accent); }
 .electricity-metrics { margin: 10px 0 0; font-size: 12px; }
 .electricity-metrics > div {
@@ -738,6 +781,31 @@ ol.zones li button.on {
     bottom: calc(var(--toolbar-height, 55px) + 28px);
     max-height: max(120px, calc(100dvh - var(--toolbar-height, 55px) - 56px));
   }
+  .electricity-card.is-collapsed {
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    max-height: none;
+  }
+}
+
+@media (max-width: 767.98px) {
+  body:has(.toolbar:not(.is-collapsed)) .electricity-card.is-collapsed {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 767.98px) {
+  body:has(.toolbar:not(.is-collapsed)) .electricity-card.is-collapsed {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .electricity-card.is-collapsed header button {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
 }
 
 /* Production details scroll above the electricity dashboard. */
@@ -745,6 +813,48 @@ body:has(.electricity-card) .object-info.sewing-team-details {
   right: max(16px, env(safe-area-inset-right, 0px));
   max-height: max(80px, calc(var(--electricity-top, 30dvh) - 28px - env(safe-area-inset-top, 0px)));
 }
+
+@media (max-width: 449.98px) {
+  :root {
+    --mobile-detail-top: calc(20px + env(safe-area-inset-top, 0px) + var(--panel-header-height, 55px));
+    --mobile-detail-max-height: max(80px, calc(var(--electricity-top, 100dvh) - var(--mobile-detail-top) - 12px));
+  }
+  .object-info { top: var(--mobile-detail-top); max-height: var(--mobile-detail-max-height); }
+  body:has(.electricity-card) .object-info.sewing-team-details {
+    max-height: var(--mobile-detail-max-height);
+  }
+}
+
+ol.zones,
+.toolbar-body,
+.team-details-body,
+.object-info:not(.sewing-team-details) > dl,
+.electricity-card:not(.is-collapsed) {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) var(--chip-bg);
+}
+
+ol.zones::-webkit-scrollbar,
+.toolbar-body::-webkit-scrollbar,
+.team-details-body::-webkit-scrollbar,
+.object-info:not(.sewing-team-details) > dl::-webkit-scrollbar,
+.electricity-card:not(.is-collapsed)::-webkit-scrollbar { width: 8px; }
+
+ol.zones::-webkit-scrollbar-thumb,
+.toolbar-body::-webkit-scrollbar-thumb,
+.team-details-body::-webkit-scrollbar-thumb,
+.object-info:not(.sewing-team-details) > dl::-webkit-scrollbar-thumb,
+.electricity-card:not(.is-collapsed)::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 8px;
+}
+
+ol.zones::-webkit-scrollbar-track,
+.toolbar-body::-webkit-scrollbar-track,
+.team-details-body::-webkit-scrollbar-track,
+.object-info:not(.sewing-team-details) > dl::-webkit-scrollbar-track,
+.electricity-card:not(.is-collapsed)::-webkit-scrollbar-track { background: var(--chip-bg); }
 
 @media (prefers-reduced-motion:reduce) {
   * {
