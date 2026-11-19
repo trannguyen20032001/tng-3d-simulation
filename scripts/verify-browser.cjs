@@ -170,6 +170,88 @@ async function load(file, modern) {
     await evaluate("localStorage.removeItem('tng-viet-duc-3d:toolbar-v1')");
     const current = await load("index.html", true);
     console.log("Refactored:", { ...current, parts: undefined });
+    if (process.argv.includes("--mobile-popups")) {
+      await send("Emulation.setDeviceMetricsOverride", {
+        width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
+      });
+      await evaluate("localStorage.removeItem('tng-viet-duc-3d:toolbar-v1')");
+      await evaluate("localStorage.removeItem('tng-viet-duc-3d:electricity-collapsed')");
+      await load("index.html", true);
+      const states = async () => evaluate(`[
+        !document.getElementById('panel').classList.contains('collapsed'),
+        !document.querySelector('.toolbar').classList.contains('is-collapsed'),
+        !document.getElementById('electricityCard').classList.contains('is-collapsed'),
+        !document.getElementById('objectInfo').hidden,
+        !document.querySelector('.sewing-team-details').hidden
+      ]`);
+      assert.deepEqual(await states(), [false, true, false, false, false]);
+      const toolbarOrder = await evaluate(`(() => {
+        const toggle = document.getElementById('toggleToolbar').getBoundingClientRect();
+        const body = document.getElementById('toolbarBody').getBoundingClientRect();
+        return toggle.bottom <= body.top;
+      })()`);
+      assert.equal(toolbarOrder, true);
+      const electricityVisibility = () => evaluate(
+        "getComputedStyle(document.getElementById('electricityCard')).visibility",
+      );
+      assert.equal(await electricityVisibility(), "hidden");
+      const buttonStyles = await evaluate(`(() => {
+        const values = (selector) => {
+          const style = getComputedStyle(document.querySelector(selector));
+          return [style.fontFamily, style.fontSize, style.fontWeight,
+            style.paddingTop, style.paddingLeft, style.borderTopWidth];
+        };
+        return [values('#toggleToolbar'),
+          values('#electricityCard header button')];
+      })()`);
+      assert.deepEqual(buttonStyles[1], buttonStyles[0]);
+      await evaluate("document.querySelector('#electricityCard header button').click()");
+      await delay(50);
+      assert.deepEqual(await states(), [false, false, true, false, false]);
+      assert.equal(await electricityVisibility(), "visible");
+      await evaluate("document.getElementById('toggleList').click()");
+      await delay(50);
+      assert.deepEqual(await states(), [true, false, false, false, false]);
+      await evaluate("document.getElementById('toggleToolbar').click()");
+      await delay(50);
+      assert.deepEqual(await states(), [false, true, false, false, false]);
+      assert.equal(await electricityVisibility(), "hidden");
+      await evaluate("TNG.state.objectInfo.show({name:'Test',floor:'Tầng 1',status:'OK'})");
+      await delay(50);
+      assert.deepEqual(await states(), [false, false, false, true, false]);
+      const detailsPosition = (selector) => evaluate(`(() => {
+        const header = document.querySelector('#panel header').getBoundingClientRect();
+        const details = document.querySelector('${selector}').getBoundingClientRect();
+        return details.top >= header.bottom + 7;
+      })()`);
+      assert.equal(await detailsPosition('#objectInfo'), true);
+      await evaluate("TNG.state.sewingTeams.select(TNG.state.sewingTeams.teams[0])");
+      await delay(50);
+      assert.deepEqual(await states(), [false, false, false, false, true]);
+      assert.equal(await detailsPosition('.sewing-team-details'), true);
+      await evaluate("document.body.click()");
+      await delay(50);
+      assert.deepEqual(await states(), [false, false, false, false, true]);
+      await evaluate("document.getElementById('toggleToolbar').click()");
+      await delay(50);
+      assert.deepEqual(await states(), [false, true, false, false, false]);
+      await evaluate("document.body.click()");
+      assert.deepEqual(await states(), [false, false, false, false, false]);
+      await evaluate("document.querySelector('#electricityCard header button').click()");
+      await delay(50);
+      assert.deepEqual(await states(), [false, false, true, false, false]);
+      await evaluate("document.body.click()");
+      assert.deepEqual(await states(), [false, false, false, false, false]);
+      await evaluate("document.getElementById('toggleList').click()");
+      await delay(50);
+      assert.deepEqual(await states(), [true, false, false, false, false]);
+      await evaluate("document.body.click()");
+      assert.deepEqual(await states(), [false, false, false, false, false]);
+      assert.equal(errors.length, 0, errors.join("\n"));
+      console.log("PASS: mobile popup coordination and outside-click dismissal.");
+      await send("Browser.close");
+      return;
+    }
     if (process.argv.includes("--electricity")) {
       const lampCounts = await evaluate(`(() => {
         const machines = TNG.state.f2.programmingMachines;

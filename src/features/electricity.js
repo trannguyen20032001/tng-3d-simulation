@@ -32,8 +32,10 @@
     card.className = "electricity-card";
     card.setAttribute("aria-label", "Giám sát điện");
     card.innerHTML = `
-      <header><div><h2>Giám sát điện</h2><small class="electricity-scope"></small></div>
-        <button type="button" aria-controls="electricityDetails"></button></header>
+      <header><button type="button" aria-controls="electricityDetails">
+        <div><span class="electricity-title">Giám sát điện</span><small class="electricity-scope"></small></div>
+        <span class="electricity-toggle-icon" aria-hidden="true"></span>
+      </button></header>
       <dl class="electricity-metrics">
         <div><dt>Điện năng trong ca</dt><dd data-metric="shift"></dd></div>
         <div><dt>Điện năng trong ngày</dt><dd data-metric="day"></dd></div>
@@ -66,23 +68,26 @@
     window.addEventListener("resize", updateDashboardBounds);
     const toggle = card.querySelector("button");
     const details = card.querySelector("#electricityDetails");
+    const metrics = card.querySelector(".electricity-metrics");
     const applyCollapsed = () => {
       details.hidden = collapsed;
+      metrics.hidden = collapsed;
       toggle.setAttribute("aria-expanded", String(!collapsed));
       toggle.setAttribute(
         "aria-label",
         collapsed ? "Mở rộng giám sát điện" : "Thu gọn giám sát điện",
       );
-      toggle.textContent = collapsed ? "▴" : "▾";
+      toggle.querySelector(".electricity-toggle-icon").textContent = "▾";
       card.classList.toggle("is-collapsed", collapsed);
     };
-    toggle.onclick = () => {
-      collapsed = !collapsed;
+    const setCollapsed = (next) => {
+      collapsed = next;
       applyCollapsed();
       try {
         localStorage.setItem(storageKey, String(collapsed));
       } catch (_) {}
     };
+    toggle.onclick = () => setCollapsed(!collapsed);
     const number = (value, digits = 1) =>
       Number.isFinite(value)
         ? value.toLocaleString("vi-VN", {
@@ -213,6 +218,7 @@
     app.electricity = {
       config,
       render,
+      setCollapsed,
       setReading(id, reading) {
         readings.set(id, reading);
         if (scope === id) render();
