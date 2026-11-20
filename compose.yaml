@@ -1,0 +1,6 @@
+services:
+  digital-twin-3d:
+    build: .
+    ports:
+      - "${APP_PORT:-3010}:3010"
+    restart: unless-stopped

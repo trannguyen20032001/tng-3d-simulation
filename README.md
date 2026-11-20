@@ -18,6 +18,25 @@ npm run build
 npm run start
 ```
 
+## Chạy bằng Docker
+
+Yêu cầu Docker Engine và Docker Compose. Có thể đặt `APP_PORT` trong `.env` để đổi cổng
+truy cập trên máy (xem `.example.env`). Tại thư mục gốc dự án, chạy:
+
+```powershell
+docker compose up --build -d
+```
+
+Mở `http://localhost:3010` (hoặc cổng `APP_PORT` đã đặt). Xem log hoặc dừng ứng dụng:
+
+```powershell
+docker compose logs -f app
+docker compose down
+```
+
+Image dùng Node.js 22.16.0 và `npm ci` để cài đúng các phiên bản trong `package-lock.json`.
+Khi thay đổi dependency, cập nhật cả `package.json` và `package-lock.json` rồi build lại image.
+
 ## Cấu trúc theo feature
 
 ```text
