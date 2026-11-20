@@ -33,7 +33,7 @@ Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ 
 
 ### 4. Cảnh báo và dấu chấm than
 
-- Dấu chấm than cảnh báo dùng component tái sử dụng `src/components/ui/warning-marker.js`. Component phụ trách phần tử giao diện, hỗ trợ bàn phím, định vị theo camera và ẩn khi ngoài khung nhìn; từng loại đối tượng chỉ cung cấp điều kiện cảnh báo, vị trí neo và hành động khi bấm.
+- Dấu chấm than cảnh báo dùng component tái sử dụng `src/common/three/objects/ui/warning-marker.js`. Component phụ trách phần tử giao diện, hỗ trợ bàn phím, định vị theo camera và ẩn khi ngoài khung nhìn; từng loại đối tượng chỉ cung cấp điều kiện cảnh báo, vị trí neo và hành động khi bấm.
 - Đối tượng gặp lỗi hoặc đạt điều kiện cảnh báo nghiêm trọng của loại đó sẽ có dấu **chấm than đỏ nhấp nháy** phía trên. Dấu cảnh báo bám theo vị trí đối tượng và camera.
 - Click dấu chấm than có cùng hành vi với click trực tiếp đối tượng: chọn, mở bảng chi tiết, đưa camera đến và bám theo đối tượng bị cảnh báo.
 - Điều kiện phát sinh và hết cảnh báo được cấu hình riêng theo loại đối tượng; không dùng chung một ngưỡng nghiệp vụ cho tất cả thiết bị.
@@ -65,7 +65,7 @@ Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ 
 - Bảng chi tiết gồm: sản lượng lũy kế/mục tiêu hiện tại; sản lượng từng công đoạn có mã thiết bị và kế hoạch; công đoạn nghẽn (sản lượng thấp nhất); chênh lệch công đoạn này trừ công đoạn liền trước; thời gian từ sản phẩm cuối và trạng thái chạy/dừng; mục tiêu, thực tế, tỷ lệ hoàn thành, hiệu suất; mã hàng, số lao động, sản lượng theo giờ, nhịp thực tế/yêu cầu, dự báo cuối ca; tỷ lệ lỗi khi có dữ liệu kiểm hàng. Thiếu dữ liệu kiểm hàng phải ghi rõ, không coi là 0% lỗi.
 - Tỷ lệ đạt = sản lượng thực tế / mục tiêu hiện tại. Dải sàn xanh khi **≥95%**, vàng khi **≥85% và <95%**, đỏ khi **<85%**. Đúng 85% là vàng, đúng 95% là xanh.
 - Tổ đạt dưới 85% có dấu chấm than đỏ nhấp nháy phía trên; bấm dấu này mở chi tiết và đưa camera đến tổ. Cảnh báo ẩn khi tầng 2 bị ẩn hoặc tổ đạt từ 85%.
-- Sản lượng và các công đoạn hiện là dữ liệu mô phỏng, cấu hình tại `src/features/sewing-teams.js`. Ví dụ hiện tại là ảnh chụp dữ liệu sau 4 giờ trong ca 8 giờ, ngưỡng dừng suy ra từ 120 giây không có sản phẩm mới. Thời gian từ sản phẩm cuối tăng theo đồng hồ; dữ liệu sản xuất chưa kết nối máy thực.
+- Sản lượng và các công đoạn hiện là dữ liệu mô phỏng, cấu hình tại `src/features/factories/viet-duc/simulation/sewing-teams.js`. Ví dụ hiện tại là ảnh chụp dữ liệu sau 4 giờ trong ca 8 giờ, ngưỡng dừng suy ra từ 120 giây không có sản phẩm mới. Thời gian từ sản phẩm cuối tăng theo đồng hồ; dữ liệu sản xuất chưa kết nối máy thực.
 - Hiệu suất lao động = sản lượng × thời gian lao động chuẩn mỗi sản phẩm / (số lao động × thời gian đã làm). Nhịp thực tế/yêu cầu = thời gian đã làm / sản lượng thực tế hoặc mục tiêu hiện tại. Dự báo cuối ca = tốc độ sản xuất hiện tại × thời lượng ca. Tổng sản lượng theo giờ bằng sản lượng lũy kế.
 
 ## Camera và đối tượng được chọn
@@ -81,7 +81,7 @@ Tài liệu này quy định hành vi mặc định cho AGV, cảm biến, tổ 
 
 ### Tuyến và cách di chuyển
 
-- Cấu hình tuyến bằng danh sách `points` trong `src/features/agv.js`.
+- Cấu hình tuyến bằng danh sách `points` trong `src/features/factories/viet-duc/simulation/agv.js`.
 - Một điểm: AGV đứng yên tại điểm đó, tốc độ bằng 0.
 - Tuyến hở hai điểm `A, B`: chạy `A → B → A → B…`.
 - Tuyến hở từ ba điểm, ví dụ `A, B, C, D`: chạy
@@ -206,7 +206,7 @@ Mỗi cảm biến có một đèn tín hiệu nhấp nháy ở phía trên thâ
 - Cảnh báo khi cosφ thấp hơn `minPowerFactor` hoặc nhiệt độ cao hơn
   `maxTemperature`. Đúng ngưỡng không cảnh báo. Biểu tượng và màu cảnh báo hiển thị cạnh chỉ số khi thẻ mở rộng.
 - Dữ liệu hiện là ảnh chụp mô phỏng, chưa kết nối công tơ. Ngưỡng minh họa
-  cosφ 0,9 và nhiệt độ 60 °C nằm tại `src/features/electricity.js`; cần thay
+  cosφ 0,9 và nhiệt độ 60 °C nằm tại `src/features/electricity/model/electricity-store.js`; cần thay
   bằng ngưỡng của thiết bị thực tế khi tích hợp.
 - Chuẩn bị mở rộng theo khu vực: `app.electricity.setReading(id, reading)` đăng ký
   dữ liệu, `selectScope(id)` chọn thẻ tương ứng; chưa gắn click khu vực tự động.
@@ -230,7 +230,7 @@ Mỗi cảm biến có một đèn tín hiệu nhấp nháy ở phía trên thâ
   lấy tọa độ từ danh sách `EXTRA` và cấu hình phòng sấy/máy dò kim trong file dựng tầng 1.
 - Nút **Slideshow** trên toolbar bật/tắt chế độ xem tự động, mặc định tắt.
 - Mỗi đối tượng được xem theo thời lượng cấu hình `durationMs` trong
-  `src/features/slideshow.js` (hiện là **10 giây**), đồng thời mở popup chi tiết của đối tượng.
+  `src/features/factories/viet-duc/simulation/slideshow.js` (hiện là **10 giây**), đồng thời mở popup chi tiết của đối tượng.
   Camera bám theo AGV đang di chuyển. Khu vực dùng góc nhìn có sẵn và hiển thị tên,
   tầng, mô tả; không tự tạo thêm dữ liệu vận hành chưa có.
 - Chờ camera hoàn tất focus, zoom nhẹ gần hơn 12% trong 0,9 giây, sau đó xoay chậm
