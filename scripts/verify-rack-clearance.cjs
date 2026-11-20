@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 const context = { TNG: { components: {} } };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname,
-  "../src/components/storage/pallet-rack.js"), "utf8"), context);
+  "../src/common/three/objects/storage/pallet-rack.js"), "utf8"), context);
 let highest = 0;
 for (let seed = 1; seed <= 100; seed++) {
   let state = seed;

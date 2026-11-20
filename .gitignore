@@ -1,2 +1,5 @@
 .tmp/
+.next/
+node_modules/
+out/
 CODING_RULES.md

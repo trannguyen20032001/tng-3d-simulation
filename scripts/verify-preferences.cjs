@@ -4,7 +4,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const source = fs.readFileSync(
-  path.join(__dirname, "../src/features/preferences.js"), "utf8",
+  path.join(__dirname, "../src/features/factories/viet-duc/simulation/preferences.js"), "utf8",
 );
 const modeIds = ["mT1", "mT2", "mBoth"];
 for (const mode of modeIds) {
