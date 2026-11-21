@@ -1,6 +1,14 @@
 services:
   digital-twin-3d:
+    container_name: digital-twin-3d
     build: .
     ports:
       - "${APP_PORT:-3010}:3010"
+    env_file:
+      - .env
     restart: unless-stopped
+
+networks:
+  iot-net:
+    external: true
+    name: iot-net
